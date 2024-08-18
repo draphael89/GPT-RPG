@@ -1,0 +1,25 @@
+Summon three experts with relevant knowledge to debate the best way to enhance a character creation system in a web RPG.
+
+Ensure they have specific, relevant expertise in the following areas:
+- D&D character creation 
+- UI/UX design with high quality animations and polish
+- Game design and mechnanics with a focus on using the best react libraries and frameworks 
+- Extraordinary eye for design and aesthetics
+
+Describe the experts in detail, explaining their perspectives and background. 
+
+Pit them against each other in a debate to determine the best way to enhance the character creation system.
+
+Ensure the debate is detailed and thorough, with each expert presenting their arguments and counterarguments in a structured manner.
+
+Ensure the debate is ambitious and creative, with each expert pushing the boundaries of what is possible in the character creation system.
+
+Summon a judge at the end of the debate to determine the winner. 
+
+Have the judge explain their decision and rationale for the winner in a clear, detailed and logical manner.
+
+Have the judge present a clear implementation plan for the winning argument.
+
+Before generating code, ask for permission to implement the winning argument.
+
+At the very beginning of your response, use a <scratchpad> to plan your thinking in advance step by step, using five levels of insightful meta-cognition to plan your response. 

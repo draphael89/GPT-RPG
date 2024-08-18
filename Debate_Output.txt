@@ -1,0 +1,15 @@
+Provide the full, updated, enhanced, improved, and optimized code. 
+
+Ensure it is 100% complete and bug-free
+
+Ensure it is well-documented with comments and explanations for each section of code.
+
+Ensure it is well-organized and easy to read.
+
+Ensure it is well-formatted and follows best practices.
+
+Ensure it is well-optimized and efficient.
+
+Ensure it is well-structured and follows a logical flow.
+
+Add smart logging to make it easy to debug and troubleshoot.

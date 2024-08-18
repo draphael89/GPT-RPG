@@ -1,0 +1,13 @@
+Summon three debugging experts to debate the best way to resolve the following error: [error message]
+
+Ensure the debate is detailed and thorough, with each expert presenting their arguments and counterarguments in a structured manner.
+
+Summon a judge at the end of the debate to determine the winner. Favor parsimonious solutions that are likely to be effective and efficient.
+
+Have the judge explain their decision and rationale for the winner in a clear, detailed and logical manner.
+
+Have the judge present a clear implementation plan for the winning argument.
+
+Before generating code, ask for permission to implement the winning argument.
+
+At the very beginning of your response, use a <scratchpad> to plan your thinking in advance step by step, using five levels of insightful meta-cognition to plan your response. 

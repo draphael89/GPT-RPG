@@ -1,0 +1,3374 @@
+Codebase Capture
+Capture Time: 2024-08-18 17:54:53
+Total Files: 59
+Total Lines: 3369
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/next-env.d.ts ---
+/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+/// <reference types="next/navigation-types/compat/navigation" />
+
+// NOTE: This file should not be edited
+// see https://nextjs.org/docs/basic-features/typescript for more information.
+
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/tailwind.config.ts ---
+import type { Config } from "tailwindcss";
+
+const config: Config = {
+  content: [
+    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+    extend: {
+      backgroundImage: {
+        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+        "gradient-conic":
+          "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+      },
+    },
+  },
+  plugins: [],
+};
+export default config;
+
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/capture_codebase.py ---
+import argparse
+import logging
+import os
+import time
+from pathlib import Path
+from typing import Dict
+
+import yaml
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+DEFAULT_CONFIG = {
+    "ignored_dirs": {"node_modules", "next", ".git", "build", "dist", ".next", "out"},
+    "ignored_files": {"package-lock.json", "yarn.lock", ".gitignore", "README.md"},
+    "allowed_extensions": {".ts", ".tsx", ".js", ".jsx", ".py"},
+    "max_file_size": 100000,  # 100 KB
+    "max_lines_per_file": 2000,
+}
+
+def load_config(config_file: str) -> Dict:
+    try:
+        with open(config_file, 'r') as f:
+            return yaml.safe_load(f)
+    except FileNotFoundError:
+        logging.warning(f"Config file {config_file} not found. Using default configuration.")
+        return DEFAULT_CONFIG
+    except yaml.YAMLError as e:
+        logging.error(f"Error parsing config file: {e}")
+        return DEFAULT_CONFIG
+
+def should_capture_file(file_path: Path, config: Dict) -> bool:
+    return (
+        file_path.suffix in config["allowed_extensions"]
+        and file_path.name not in config["ignored_files"]
+        and file_path.stat().st_size <= config["max_file_size"]
+    )
+
+def capture_file_content(file_path: Path, config: Dict) -> str:
+    try:
+        with file_path.open('r', encoding='utf-8') as f:
+            content = f.read()
+        return f"--- {file_path} ---\n{content}\n\n"
+    except Exception as e:
+        logging.error(f"Error reading file {file_path}: {str(e)}")
+        return f"--- {file_path} ---\nError: {str(e)}\n\n"
+
+def capture_codebase(root_dir: Path, config: Dict) -> str:
+    codebase_content = ""
+    total_files = 0
+    total_lines = 0
+
+    for dirpath, dirnames, filenames in os.walk(root_dir):
+        current_path = Path(dirpath)
+        
+        # Exclude ignored directories
+        dirnames[:] = [d for d in dirnames if d not in config["ignored_dirs"]]
+        
+        for filename in filenames:
+            file_path = current_path / filename
+            if should_capture_file(file_path, config):
+                file_content = capture_file_content(file_path, config)
+                codebase_content += file_content
+                total_files += 1
+                total_lines += len(file_content.splitlines())
+
+    metadata = f"""Codebase Capture
+Capture Time: {time.strftime('%Y-%m-%d %H:%M:%S')}
+Total Files: {total_files}
+Total Lines: {total_lines}
+
+"""
+    return metadata + codebase_content
+
+def main(root_directory: str, output_file: str, config_file: str):
+    config = load_config(config_file)
+    root_path = Path(root_directory).resolve()
+    
+    logging.info(f"Starting codebase capture from {root_path}")
+    codebase_content = capture_codebase(root_path, config)
+    
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(codebase_content)
+    
+    logging.info(f"Codebase captured and saved to {output_file}")
+    logging.info(f"Total files: {codebase_content.splitlines()[2].split(': ')[1]}")
+    logging.info(f"Total lines of code: {codebase_content.splitlines()[3].split(': ')[1]}")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Capture codebase structure and content.")
+    parser.add_argument("--root", default=".", help="Root directory of the codebase")
+    parser.add_argument("--output", default="codebase_capture.txt", help="Output text file")
+    parser.add_argument("--config", default="capture_config.yaml", help="Configuration YAML file")
+    
+    args = parser.parse_args()
+    main(args.root, args.output, args.config)
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/theme.ts ---
+import { extendTheme } from "@chakra-ui/react";
+
+const theme = extendTheme({
+  colors: {
+    brand: {
+      50: "#f0e4ff",
+      100: "#cbb2ff",
+      200: "#a480ff",
+      300: "#7b4dff",
+      400: "#541bff",
+      500: "#3b01e6",
+      600: "#2d00b4",
+      700: "#1f0082",
+      800: "#110050",
+      900: "#06001f",
+    },
+    parchment: {
+      50: "#fff9e6",
+      100: "#ffefc0",
+      200: "#ffe599",
+      300: "#ffdb72",
+      400: "#ffd14b",
+      500: "#ffc724",
+      600: "#e6b31f",
+      700: "#cc9f1b",
+      800: "#b38b17",
+      900: "#997713",
+    },
+  },
+  fonts: {
+    heading: "'MedievalSharp', cursive",
+    body: "'Roboto Slab', serif",
+  },
+  components: {
+    Button: {
+      baseStyle: {
+        fontWeight: "bold",
+      },
+      variants: {
+        solid: (props: { colorScheme: string }) => ({
+          bg: `${props.colorScheme}.500`,
+          color: "white",
+          _hover: {
+            bg: `${props.colorScheme}.600`,
+          },
+        }),
+        outline: (props: { colorScheme: string }) => ({
+          border: "2px solid",
+          borderColor: `${props.colorScheme}.500`,
+          color: `${props.colorScheme}.500`,
+          _hover: {
+            bg: `${props.colorScheme}.50`,
+          },
+        }),
+      },
+    },
+  },
+});
+
+export default theme;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/types/next.ts ---
+import { NextPage } from 'next';
+import { ReactElement, ReactNode } from 'react';
+
+export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
+  getLayout?: (page: ReactElement) => ReactNode;
+};
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/types/character.ts ---
+import getLogger from '../utils/logger';
+
+const logger = getLogger();
+
+/**
+ * Represents the available character classes in the game.
+ */
+export type CharacterClass = 'Fighter' | 'Wizard' | 'Rogue' | 'Cleric' | 'Paladin' | 'Ranger' | 'Sorcerer';
+
+/**
+ * Represents the available character races in the game.
+ */
+export type CharacterRace = 'Human' | 'Elf' | 'Dwarf' | 'Halfling' | 'Gnome' | 'Half-Elf' | 'Half-Orc';
+
+/**
+ * Represents the character's attributes.
+ */
+export interface Attributes {
+  strength: number;
+  dexterity: number;
+  constitution: number;
+  intelligence: number;
+  wisdom: number;
+  charisma: number;
+}
+
+/**
+ * Represents the character's background information.
+ */
+export interface Background {
+  name: string;
+  personalityTraits: string[];
+  ideals: string[];
+  bonds: string[];
+  flaws: string[];
+}
+
+/**
+ * Represents the full state of a character.
+ */
+export interface CharacterState {
+  name: string;
+  race: CharacterRace;
+  class: CharacterClass;
+  attributes: Attributes;
+  skills: Set<string>; // Using Set for efficient lookup and uniqueness
+  background: Background;
+  level: number;
+  health: number;
+  mana: number;
+  xp: number;
+  equipment: string[];
+}
+
+/**
+ * Creates a new character with default values.
+ * @param name - The name of the character.
+ * @param race - The race of the character.
+ * @param characterClass - The class of the character.
+ * @returns A new CharacterState object with default values.
+ */
+export function createNewCharacter(name: string, race: CharacterRace, characterClass: CharacterClass): CharacterState {
+  logger.debug('Creating new character', { name, race, class: characterClass });
+  
+  const newCharacter: CharacterState = {
+    name,
+    race,
+    class: characterClass,
+    attributes: {
+      strength: 10,
+      dexterity: 10,
+      constitution: 10,
+      intelligence: 10,
+      wisdom: 10,
+      charisma: 10
+    },
+    skills: new Set(),
+    background: {
+      name: '',
+      personalityTraits: [],
+      ideals: [],
+      bonds: [],
+      flaws: []
+    },
+    level: 1,
+    health: 10,
+    mana: 10,
+    xp: 0,
+    equipment: []
+  };
+
+  logger.debug('New character created', { characterId: name });
+  return newCharacter;
+}
+
+/**
+ * Calculates the modifier for a given attribute score.
+ * @param score - The attribute score.
+ * @returns The calculated modifier.
+ */
+export function calculateAttributeModifier(score: number): number {
+  return Math.floor((score - 10) / 2);
+}
+
+/**
+ * Validates a CharacterState object.
+ * @param character - The character state to validate.
+ * @returns An array of error messages, or an empty array if valid.
+ */
+export function validateCharacter(character: CharacterState): string[] {
+  const errors: string[] = [];
+
+  if (!character.name) errors.push('Character name is required');
+  if (!character.race) errors.push('Character race is required');
+  if (!character.class) errors.push('Character class is required');
+  
+  // Validate attributes
+  Object.entries(character.attributes).forEach(([attr, value]) => {
+    if (value < 3 || value > 18) errors.push(`${attr} must be between 3 and 18`);
+  });
+
+  // Validate skills
+  if (character.skills.size < 2) errors.push('Character must have at least 2 skills');
+
+  // Validate background
+  if (!character.background.name) errors.push('Background name is required');
+  if (character.background.personalityTraits.length === 0) errors.push('At least one personality trait is required');
+  if (character.background.ideals.length === 0) errors.push('At least one ideal is required');
+  if (character.background.bonds.length === 0) errors.push('At least one bond is required');
+  if (character.background.flaws.length === 0) errors.push('At least one flaw is required');
+
+  logger.debug('Character validation complete', { 
+    characterId: character.name, 
+    isValid: errors.length === 0, 
+    errorCount: errors.length 
+  });
+
+  return errors;
+}
+
+// Export a namespace with all character-related types and functions
+export const Character = {
+  createNewCharacter,
+  calculateAttributeModifier,
+  validateCharacter
+};
+
+// Log that the character module has been loaded
+logger.debug('Character types and utilities loaded');
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/types/firebase.d.ts ---
+import { FirebaseApp } from 'firebase/app';
+import { Auth, User } from 'firebase/auth';
+import { Firestore } from 'firebase/firestore';
+
+declare global {
+  interface Window {
+    firebase?: {
+      app: FirebaseApp;
+      auth: Auth;
+      firestore: Firestore;
+    };
+  }
+}
+
+declare module 'firebase/app' {
+  interface FirebaseApp {
+    auth(): Auth;
+    firestore(): Firestore;
+  }
+}
+
+declare module 'next' {
+  interface NextApiRequest {
+    firebaseUser?: User;
+  }
+}
+
+// You can add more Firebase-related type declarations here as needed
+
+export {};
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/types/game.ts ---
+export interface Attributes {
+    strength: number;
+    dexterity: number;
+    constitution: number;
+    intelligence: number;
+    wisdom: number;
+    charisma: number;
+  }
+  
+  export interface RaceModifiers {
+    [key: string]: Partial<Attributes>;
+  }
+  
+  export interface ClassSkills {
+    [key: string]: string[];
+  }
+  
+  export interface CharacterState {
+    race: string;
+    class: string;
+    attributes: Attributes;
+    skills: string[];
+    health: number;
+    mana: number;
+  }
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/types/equipment.ts ---
+import { CharacterClass } from './character';
+import getLogger from '../utils/logger';
+
+const logger = getLogger();
+
+/**
+ * Represents the rarity of an equipment item.
+ */
+export enum EquipmentRarity {
+  Common = 'Common',
+  Uncommon = 'Uncommon',
+  Rare = 'Rare',
+  VeryRare = 'Very Rare',
+  Legendary = 'Legendary',
+}
+
+/**
+ * Represents the type of equipment.
+ */
+export enum EquipmentType {
+  Weapon = 'Weapon',
+  Armor = 'Armor',
+  Potion = 'Potion',
+  Scroll = 'Scroll',
+  Wand = 'Wand',
+  Ring = 'Ring',
+  Miscellaneous = 'Miscellaneous',
+}
+
+/**
+ * Represents an equipment item in the game.
+ */
+export interface EquipmentItem {
+  id: string;
+  name: string;
+  description: string;
+  weight: number;
+  value: number;
+  classes: Set<CharacterClass | 'All'>; // Using Set for faster lookups
+  type: EquipmentType;
+  rarity: EquipmentRarity;
+  magicalProperties?: string[];
+  durability?: number;
+}
+
+/**
+ * Represents the equipment loadout of a character.
+ */
+export interface CharacterEquipment {
+  weapons: EquipmentItem[];
+  armor: EquipmentItem[];
+  accessories: EquipmentItem[];
+  inventory: EquipmentItem[];
+}
+
+/**
+ * Calculates the total weight of a character's equipment.
+ * @param equipment - The character's equipment loadout.
+ * @returns The total weight of all equipment items.
+ */
+export function calculateTotalEquipmentWeight(equipment: CharacterEquipment): number {
+  logger.debug('Calculating total equipment weight');
+  
+  const totalWeight = Object.values(equipment).flat().reduce((acc, item) => acc + item.weight, 0);
+
+  logger.debug('Total equipment weight calculated', { totalWeight });
+  return totalWeight;
+}
+
+/**
+ * Checks if an item is equippable by a specific character class.
+ * @param item - The equipment item to check.
+ * @param characterClass - The character class to check against.
+ * @returns True if the item is equippable, false otherwise.
+ */
+export function isItemEquippableByClass(item: EquipmentItem, characterClass: CharacterClass): boolean {
+  logger.debug('Checking if item is equippable by class', { itemName: item.name, characterClass });
+  
+  const isEquippable = item.classes.has(characterClass) || item.classes.has('All');
+  
+  logger.debug('Item equippability check result', { isEquippable });
+  return isEquippable;
+}
+
+/**
+ * Generates a string representation of an equipment item.
+ * @param item - The equipment item to stringify.
+ * @returns A string representation of the item.
+ */
+export function stringifyEquipmentItem(item: EquipmentItem): string {
+  const magicalPropertiesString = item.magicalProperties 
+    ? `Magical Properties: ${item.magicalProperties.join(', ')}. ` 
+    : '';
+  const durabilityString = item.durability !== undefined 
+    ? `Durability: ${item.durability}. ` 
+    : '';
+
+  return `${item.name} (${item.type}, ${item.rarity}): ${item.description}. ` +
+         `Value: ${item.value} gold, Weight: ${item.weight} lbs. ` +
+         `${magicalPropertiesString}${durabilityString}` +
+         `Usable by: ${Array.from(item.classes).join(', ')}.`;
+}
+
+/**
+ * Creates a new EquipmentItem with default values for optional properties.
+ * @param params - The parameters to create the EquipmentItem.
+ * @returns A new EquipmentItem object.
+ */
+export function createEquipmentItem(params: Omit<EquipmentItem, 'magicalProperties' | 'durability'> & 
+  Partial<Pick<EquipmentItem, 'magicalProperties' | 'durability'>>): EquipmentItem {
+  logger.debug('Creating new equipment item', { itemName: params.name });
+  
+  const item: EquipmentItem = {
+    ...params,
+    magicalProperties: params.magicalProperties || [],
+    durability: params.durability !== undefined ? params.durability : 100
+  };
+
+  logger.debug('New equipment item created', { item });
+  return item;
+}
+
+// Export a namespace with all equipment-related types and functions
+export const Equipment = {
+  EquipmentRarity,
+  EquipmentType,
+  calculateTotalEquipmentWeight,
+  isItemEquippableByClass,
+  stringifyEquipmentItem,
+  createEquipmentItem,
+};
+
+// Log that the equipment module has been loaded
+logger.debug('Equipment types and utilities loaded');
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/app/layout.tsx ---
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import ClientProvider from '../components/ClientProvider';
+import { FirebaseProvider } from '../components/FirebaseProvider';
+import { ChakraProvider } from '@chakra-ui/react';
+import { metadata } from './metadata';
+
+const inter = Inter({ subsets: ["latin"] });
+
+export { metadata };
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>
+        <FirebaseProvider>
+          <ClientProvider>
+            <ChakraProvider>
+              {children}
+            </ChakraProvider>
+          </ClientProvider>
+        </FirebaseProvider>
+      </body>
+    </html>
+  );
+}
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/app/metadata.ts ---
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "D&D Next.js Game",
+  description: "A Dungeons & Dragons inspired game built with Next.js",
+};
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/app/page.tsx ---
+'use client';
+
+import React from 'react';
+import dynamic from 'next/dynamic';
+import NextLink from 'next/link';
+import {
+  Box,
+  Heading,
+  Text,
+  VStack,
+  Link,
+  Container,
+  Skeleton,
+  useColorModeValue,
+} from '@chakra-ui/react';
+import Layout from '../components/Layout';
+import { isServer } from '../utils/isServer';
+import getLogger from '../utils/logger';
+
+// Initialize logger
+const logger = getLogger();
+
+// Dynamically import HomeContent to avoid potential circular dependencies
+const DynamicHomeContent = dynamic(() => import('../components/HomeContent'), {
+  ssr: false,
+  loading: () => <Skeleton height="200px" />,
+});
+
+// StaticContent component for the home page
+const StaticContent: React.FC = () => {
+  const linkColor = useColorModeValue('blue.600', 'blue.300');
+
+  return (
+    <Box mt={8}>
+      <Heading as="h2" size="xl" mb={4}>
+        About Our Game
+      </Heading>
+      <Text fontSize="lg" mb={4}>
+        Embark on an epic journey in our Dungeons & Dragons inspired web game. 
+        Create your character, explore vast lands, and face challenging quests!
+      </Text>
+      <VStack spacing={2} align="stretch">
+        <Link as={NextLink} href="/rules" color={linkColor} fontWeight="medium">
+          Game Rules
+        </Link>
+        <Link as={NextLink} href="/faq" color={linkColor} fontWeight="medium">
+          FAQ
+        </Link>
+      </VStack>
+    </Box>
+  );
+};
+
+// Main Home component
+const Home: React.FC = () => {
+  const bgColor = useColorModeValue('gray.50', 'gray.900');
+  const textColor = useColorModeValue('gray.800', 'gray.100');
+
+  logger.info('Rendering Home component');
+
+  return (
+    <Layout>
+      <Box bg={bgColor} minHeight="100vh" py={10}>
+        <Container maxW="container.xl">
+          <VStack spacing={8} align="stretch">
+            <Heading as="h1" size="2xl" textAlign="center" color={textColor}>
+              Welcome to D&D Next.js Game
+            </Heading>
+            {!isServer && <DynamicHomeContent />}
+            <StaticContent />
+          </VStack>
+        </Container>
+      </Box>
+    </Layout>
+  );
+};
+
+export default Home;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/app/signup/SignupContent.tsx ---
+'use client';
+
+import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { signUp } from '../../lib/firebase';
+import { setUser, setError } from '../../lib/userSlice';
+import { useFirebase } from '../../components/FirebaseProvider';
+
+// Utility function for logging
+const log = (message: string, data?: any) => {
+  console.log(`[SignUp] ${message}`, data ? data : '');
+};
+
+const SignUpContent: React.FC = () => {
+  // State management
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Hooks
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const { app } = useFirebase();
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    log('Form submitted');
+    setErrorMessage('');
+    setIsLoading(true);
+
+    if (!app) {
+      setErrorMessage('Firebase is not initialized. Please try again later.');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate passwords match
+    if (password !== confirmPassword) {
+      log('Password mismatch');
+      setErrorMessage("Passwords don't match");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Attempt to sign up the user
+      log('Attempting to sign up user', { email });
+      const user = await signUp(email, password);
+      log('User signed up successfully', { uid: user.uid });
+
+      // Update Redux store with user info
+      dispatch(setUser({ uid: user.uid, email: user.email }));
+
+      // Redirect to character creation page
+      log('Redirecting to character creation');
+      router.push('/character-creation');
+    } catch (error) {
+      // Handle sign-up errors
+      const errorMessage = (error as Error).message;
+      log('Sign-up error', errorMessage);
+      setErrorMessage(errorMessage);
+      dispatch(setError(errorMessage));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          Create your account
+        </h2>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          {/* Error message display */}
+          {errorMessage && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+              <span className="block sm:inline">{errorMessage}</span>
+            </div>
+          )}
+          
+          {/* Sign-up form */}
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {/* Email input */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email address
+              </label>
+              <div className="mt-1">
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Password input */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <div className="mt-1">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Confirm password input */}
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                Confirm Password
+              </label>
+              <div className="mt-1">
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Submit button */}
+            <div>
+              <button
+                type="submit"
+                disabled={isLoading || !app}
+                className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${(isLoading || !app) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {isLoading ? 'Signing up...' : 'Sign up'}
+              </button>
+            </div>
+          </form>
+
+          {/* Divider */}
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">
+                  Already have an account?
+                </span>
+              </div>
+            </div>
+
+            {/* Link to sign in page */}
+            <div className="mt-6">
+              <Link href="/login" className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                Sign in
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SignUpContent;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/app/signup/page.tsx ---
+'use client';
+
+import React from 'react';
+import dynamic from 'next/dynamic';
+import ClientOnly from '../../components/client/ClientOnly';
+
+// Dynamically import the FirebaseProvider component
+const DynamicFirebaseProvider = dynamic(
+  () => import('../../components/FirebaseProvider').then((mod) => mod.FirebaseProvider),
+  { ssr: false }
+);
+
+// Dynamically import the SignUpContent component
+const DynamicSignUpContent = dynamic(() => import('./SignupContent'), { ssr: false });
+
+const SignUp: React.FC = () => {
+  return (
+    <ClientOnly>
+      <DynamicFirebaseProvider>
+        <DynamicSignUpContent />
+      </DynamicFirebaseProvider>
+    </ClientOnly>
+  );
+};
+
+export default SignUp;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/app/game/page.tsx ---
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Box, Heading, Text, VStack, HStack, Button, Spinner } from "@chakra-ui/react";
+import dynamic from 'next/dynamic';
+import getLogger from '../../utils/logger';
+
+// Initialize logger
+const logger = getLogger();
+
+// Dynamically import components to avoid potential circular dependencies
+const Layout = dynamic(() => import('../../components/Layout'), { ssr: true });
+const ProtectedRoute = dynamic(() => import('../../components/ProtectedRoute'), { ssr: false });
+const ClientOnly = dynamic(() => import('../../components/client/ClientOnly'), { ssr: false });
+const DynamicCharacterStats = dynamic(() => import('../../components/CharacterStats'), {
+  ssr: false,
+  loading: () => <Spinner size="xl" />
+});
+
+// Import the Firebase hook
+import useFirebase from '../../hooks/useFirebase';
+
+// GameContent component
+const GameContent: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const firebase = useFirebase();
+
+  useEffect(() => {
+    logger.info('GameContent: Checking Firebase initialization');
+    if (firebase) {
+      logger.info('GameContent: Firebase initialized, setting isLoading to false');
+      setIsLoading(false);
+    }
+  }, [firebase]);
+
+  if (isLoading) {
+    logger.info('GameContent: Rendering loading spinner');
+    return <Spinner size="xl" />;
+  }
+
+  logger.info('GameContent: Rendering game content');
+  return (
+    <VStack spacing={6} align="stretch" maxW="4xl" mx="auto">
+      <Heading as="h1" size="2xl" textAlign="center" color="brand.700">Game Screen</Heading>
+      <HStack spacing={8} alignItems="flex-start">
+        <Box flex={1}>
+          <DynamicCharacterStats />
+        </Box>
+        <VStack flex={2} spacing={4} align="stretch">
+          <Box bg="white" shadow="md" borderRadius="lg" p={6}>
+            <Heading as="h2" size="lg" mb={4} color="brand.600">Adventure Log</Heading>
+            <Text>Your adventure begins here...</Text>
+          </Box>
+          <HStack>
+            <Button colorScheme="brand" flex={1}>Explore</Button>
+            <Button colorScheme="brand" flex={1}>Rest</Button>
+            <Button colorScheme="brand" flex={1}>Inventory</Button>
+          </HStack>
+        </VStack>
+      </HStack>
+    </VStack>
+  );
+};
+
+// Main Game component
+const Game: React.FC = () => {
+  logger.info('Rendering Game component');
+  return (
+    <Layout>
+      <ClientOnly>
+        <GameContent />
+      </ClientOnly>
+    </Layout>
+  );
+};
+
+// Export the protected game page
+export default function GamePage() {
+  logger.info('Rendering GamePage');
+  return (
+    <ProtectedRoute>
+      <Game />
+    </ProtectedRoute>
+  );
+}
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/app/character-creation/CharacterCreationContent.tsx ---
+import React, { useState } from 'react';
+import {
+  Box,
+  Button,
+  FormControl,
+  FormLabel,
+  Input,
+  VStack,
+  Heading,
+  useToast,
+} from '@chakra-ui/react';
+
+const CharacterCreationContent: React.FC = () => {
+  const [characterName, setCharacterName] = useState('');
+  const [characterClass, setCharacterClass] = useState('');
+  const [characterRace, setCharacterRace] = useState('');
+  const toast = useToast();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Here you would typically send this data to your backend or state management
+    console.log('Character created:', { characterName, characterClass, characterRace });
+    toast({
+      title: 'Character Created',
+      description: `${characterName} the ${characterRace} ${characterClass} has been created!`,
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
+    // Reset form
+    setCharacterName('');
+    setCharacterClass('');
+    setCharacterRace('');
+  };
+
+  return (
+    <Box maxWidth="500px" margin="auto" padding={4}>
+      <Heading as="h1" size="xl" textAlign="center" mb={6}>
+        Create Your Character
+      </Heading>
+      <form onSubmit={handleSubmit}>
+        <VStack spacing={4}>
+          <FormControl isRequired>
+            <FormLabel>Character Name</FormLabel>
+            <Input
+              type="text"
+              value={characterName}
+              onChange={(e) => setCharacterName(e.target.value)}
+            />
+          </FormControl>
+          <FormControl isRequired>
+            <FormLabel>Class</FormLabel>
+            <Input
+              type="text"
+              value={characterClass}
+              onChange={(e) => setCharacterClass(e.target.value)}
+            />
+          </FormControl>
+          <FormControl isRequired>
+            <FormLabel>Race</FormLabel>
+            <Input
+              type="text"
+              value={characterRace}
+              onChange={(e) => setCharacterRace(e.target.value)}
+            />
+          </FormControl>
+          <Button type="submit" colorScheme="blue" width="full">
+            Create Character
+          </Button>
+        </VStack>
+      </form>
+    </Box>
+  );
+};
+
+export default CharacterCreationContent;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/app/character-creation/page.tsx ---
+'use client';
+
+import React from 'react';
+import dynamic from 'next/dynamic';
+import { Spinner, Box } from '@chakra-ui/react';
+
+const DynamicLayout = dynamic(() => import('../../components/Layout'), { ssr: false });
+const DynamicProtectedRoute = dynamic<{ children: React.ReactNode }>(
+  () => import('../../components/ProtectedRoute').then(mod => mod.default),
+  { ssr: false }
+);
+
+const DynamicCharacterCreationContent = dynamic(() => import('./CharacterCreationContent'), {
+  ssr: false,
+  loading: () => <Box display="flex" justifyContent="center" alignItems="center" height="100vh"><Spinner size="xl" /></Box>
+});
+
+const CharacterCreation: React.FC = () => {
+  return (
+    <DynamicLayout>
+      <DynamicCharacterCreationContent />
+    </DynamicLayout>
+  );
+};
+
+const ProtectedCharacterCreation: React.FC = () => {
+  return (
+    <DynamicProtectedRoute>
+      <CharacterCreation />
+    </DynamicProtectedRoute>
+  );
+};
+
+export default function Page() {
+  return <ProtectedCharacterCreation />;
+}
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/app/inventory/InventoryContent.tsx ---
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Box, Heading, VStack, SimpleGrid, Text, Spinner } from "@chakra-ui/react";
+import { collection, getDocs, DocumentData } from 'firebase/firestore';
+import Layout from '../../components/Layout';
+import useFirebase from '../../hooks/useFirebase';
+
+interface InventoryItem {
+  name: string;
+  quantity: number;
+}
+
+const InventoryItemComponent: React.FC<InventoryItem> = ({ name, quantity }) => (
+  <Box borderWidth={1} borderRadius="lg" p={4} bg="white">
+    <Text fontWeight="bold">{name}</Text>
+    <Text>Quantity: {quantity}</Text>
+  </Box>
+);
+
+const InventoryContent: React.FC = () => {
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const firebase = useFirebase();
+
+  useEffect(() => {
+    const fetchInventory = async () => {
+      if (firebase?.firestore && firebase?.auth.currentUser) {
+        try {
+          const userId = firebase.auth.currentUser.uid;
+          const inventoryRef = collection(firebase.firestore, `users/${userId}/inventory`);
+          const inventorySnapshot = await getDocs(inventoryRef);
+
+          const items = inventorySnapshot.docs.map((doc: DocumentData) => ({
+            name: doc.data().name,
+            quantity: doc.data().quantity
+          }));
+
+          setInventoryItems(items);
+        } catch (error) {
+          console.error('Error fetching inventory:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchInventory();
+  }, [firebase]);
+
+  if (loading) {
+    return <Spinner size="xl" />;
+  }
+
+  return (
+    <Layout>
+      <VStack spacing={6} align="stretch" maxW="4xl" mx="auto">
+        <Heading as="h1" size="2xl" textAlign="center" color="brand.700">Inventory</Heading>
+        <Box bg="parchment.100" shadow="md" borderRadius="lg" p={6}>
+          <SimpleGrid columns={[1, 2, 3]} spacing={4}>
+            {inventoryItems.map((item, index) => (
+              <InventoryItemComponent key={index} name={item.name} quantity={item.quantity} />
+            ))}
+          </SimpleGrid>
+        </Box>
+      </VStack>
+    </Layout>
+  );
+};
+
+export default InventoryContent;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/app/inventory/page.tsx ---
+import React from 'react';
+import { Metadata } from 'next';
+import dynamic from 'next/dynamic';
+import ProtectedRoute from '../../components/ProtectedRoute';
+
+export const metadata: Metadata = {
+  title: 'Inventory | DnD Game',
+  description: 'View and manage your inventory items',
+};
+
+// Dynamically import the InventoryContent component with SSR disabled
+const DynamicInventoryContent = dynamic(
+  () => import('./InventoryContent'),
+  { ssr: false }
+);
+
+const InventoryPage = () => {
+  return (
+    <ProtectedRoute>
+      <DynamicInventoryContent />
+    </ProtectedRoute>
+  );
+};
+
+export default InventoryPage;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/app/character-summary/CharacterSummaryContent.tsx ---
+'use client';
+
+import React from 'react';
+import { useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
+import { Box, VStack, Heading, Text, Button, Grid, GridItem } from "@chakra-ui/react";
+import { RootState } from '../../lib/store';
+import { Attributes } from '../../lib/characterSlice';
+import AttributeBox from '../../components/character-creation/AttributeBox';
+
+const AttributesList: React.FC<{ attributes: Attributes }> = ({ attributes }) => (
+  <Grid templateColumns="repeat(3, 1fr)" gap={4}>
+    {Object.entries(attributes).map(([attr, value]) => (
+      <GridItem key={attr}>
+        <AttributeBox name={attr} value={value} max={20} />
+      </GridItem>
+    ))}
+  </Grid>
+);
+
+const CharacterSummaryContent: React.FC = () => {
+  const character = useSelector((state: RootState) => state.character);
+  const router = useRouter();
+
+  return (
+    <VStack spacing={6} align="stretch" maxW="2xl" mx="auto">
+      <Heading as="h1" size="2xl" textAlign="center" color="brand.700">Character Summary</Heading>
+      <Box bg="white" shadow="md" borderRadius="lg" p={6}>
+        <Heading as="h2" size="xl" mb={4} color="brand.500">{character.name}</Heading>
+        <Text><strong>Race:</strong> {character.race}</Text>
+        <Text><strong>Class:</strong> {character.class}</Text>
+        <Heading as="h3" size="lg" mt={6} mb={3} color="brand.600">Attributes</Heading>
+        <AttributesList attributes={character.attributes} />
+        <Heading as="h3" size="lg" mt={6} mb={3} color="brand.600">Skills</Heading>
+        <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+          {Array.from(character.skills).map((skill: string) => (
+            <Text key={skill}>{skill}</Text>
+          ))}
+        </Grid>
+        <Heading as="h3" size="lg" mt={6} mb={3} color="brand.600">Background</Heading>
+        <Text><strong>Name:</strong> {character.background.name}</Text>
+        <Text><strong>Personality Traits:</strong> {character.background.personalityTraits.join(', ')}</Text>
+        <Text><strong>Ideals:</strong> {character.background.ideals.join(', ')}</Text>
+        <Text><strong>Bonds:</strong> {character.background.bonds.join(', ')}</Text>
+        <Text><strong>Flaws:</strong> {character.background.flaws.join(', ')}</Text>
+      </Box>
+      <Button
+        onClick={() => router.push('/game')}
+        colorScheme="brand"
+        size="lg"
+        width="full"
+      >
+        Start Your Adventure
+      </Button>
+    </VStack>
+  );
+};
+
+export default CharacterSummaryContent;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/app/character-summary/page.tsx ---
+'use client';
+
+import React from 'react';
+import dynamic from 'next/dynamic';
+import { Spinner } from "@chakra-ui/react";
+
+const DynamicLayout = dynamic(() => import('../../components/Layout'), { ssr: false });
+const DynamicProtectedRoute = dynamic<{ children: React.ReactNode }>(
+  () => import('../../components/ProtectedRoute').then(mod => mod.default),
+  { ssr: false }
+);
+
+const DynamicCharacterSummaryContent = dynamic(() => import('./CharacterSummaryContent'), {
+  ssr: false,
+  loading: () => <Spinner size="xl" />
+});
+
+const CharacterSummary: React.FC = () => {
+  return (
+    <DynamicLayout>
+      <DynamicCharacterSummaryContent />
+    </DynamicLayout>
+  );
+};
+
+const ProtectedCharacterSummary: React.FC = () => {
+  return (
+    <DynamicProtectedRoute>
+      <CharacterSummary />
+    </DynamicProtectedRoute>
+  );
+};
+
+export default function Page() {
+  return <ProtectedCharacterSummary />;
+}
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/app/login/page.tsx ---
+import React, { Suspense } from 'react';
+import dynamic from 'next/dynamic';
+import Layout from '../../components/Layout';
+
+// Dynamically import ClientOnly component
+const DynamicClientOnly = dynamic(() => import('../../components/client/ClientOnly'), {
+  ssr: false,
+});
+
+// Dynamically import LoginContent component
+const DynamicLoginContent = dynamic(() => import('../../components/client/LoginContext'), {
+  ssr: false,
+});
+
+export default function LoginPage() {
+  return (
+    <Layout>
+      <Suspense fallback={<div>Loading...</div>}>
+        <DynamicClientOnly>
+          <DynamicLoginContent />
+        </DynamicClientOnly>
+      </Suspense>
+    </Layout>
+  );
+}
+
+// This is optional, but can be used to generate static params if needed
+export function generateStaticParams() {
+  return [];
+}
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/utils/validation.ts ---
+import { CharacterState } from '../lib/characterSlice';
+
+export function validateCharacterStep(step: number, character: CharacterState): string[] {
+  const errors: string[] = [];
+
+  switch (step) {
+    case 1:
+      if (!character.name) errors.push('Name is required');
+      if (!character.race) errors.push('Race is required');
+      if (!character.class) errors.push('Class is required');
+      break;
+    case 2:
+      if (character.attributePoints !== 0) errors.push('You must use all attribute points');
+      Object.entries(character.attributes).forEach(([attr, value]) => {
+        if (value < 8 || value > 15) errors.push(`${attr} must be between 8 and 15`);
+      });
+      break;
+    case 3:
+      if (character.skills.length < 2) errors.push('You must select at least 2 skills');
+      break;
+    case 4:
+      if (!character.background.name) errors.push('Background name is required');
+      if (character.background.personalityTraits.length === 0) errors.push('At least one personality trait is required');
+      if (character.background.ideals.length === 0) errors.push('At least one ideal is required');
+      if (character.background.bonds.length === 0) errors.push('At least one bond is required');
+      if (character.background.flaws.length === 0) errors.push('At least one flaw is required');
+      break;
+    case 5:
+      if (character.equipment.length === 0) errors.push('You must select at least one piece of equipment');
+      break;
+  }
+
+  return errors;
+}
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/utils/isServer.ts ---
+export const isServer = typeof window === 'undefined';
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/utils/envCheck.ts ---
+const getEnvVar = (key: string): string => {
+    if (typeof window !== 'undefined') {
+      return process.env[key] || '';
+    }
+    return process.env[key] || '';
+  };
+  
+  export function checkRequiredEnvVars() {
+    const requiredEnvVars = [
+      'NEXT_PUBLIC_FIREBASE_API_KEY',
+      'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
+      'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+      'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
+      'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
+      'NEXT_PUBLIC_FIREBASE_APP_ID',
+      'NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID'
+    ];
+  
+    const missingEnvVars = requiredEnvVars.filter(
+      (envVar) => !getEnvVar(envVar)
+    );
+  
+    if (missingEnvVars.length > 0) {
+      console.warn('⚠️ Missing environment variables:', missingEnvVars);
+      missingEnvVars.forEach(envVar => {
+        console.warn(`   Missing: ${envVar}`);
+      });
+      console.warn('Please check your .env.local file and ensure all required variables are set.');
+      return false;
+    }
+  
+    return true;
+  }
+  
+  export function getFirebaseConfig() {
+    return {
+      apiKey: getEnvVar('NEXT_PUBLIC_FIREBASE_API_KEY'),
+      authDomain: getEnvVar('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN'),
+      projectId: getEnvVar('NEXT_PUBLIC_FIREBASE_PROJECT_ID'),
+      storageBucket: getEnvVar('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET'),
+      messagingSenderId: getEnvVar('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'),
+      appId: getEnvVar('NEXT_PUBLIC_FIREBASE_APP_ID'),
+      measurementId: getEnvVar('NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID')
+    };
+  }
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/utils/equipmentUtils.ts ---
+import { EquipmentItem, EquipmentType, EquipmentRarity } from '../types/equipment';
+import { CharacterClass } from '../types/character';
+import getLogger from './logger';
+
+const logger = getLogger();
+
+/**
+ * Custom error class for equipment-related errors
+ */
+class EquipmentError extends Error {
+  constructor(message: string, public context: Record<string, unknown>) {
+    super(message);
+    this.name = 'EquipmentError';
+  }
+}
+
+// Mock database of equipment items
+// In a real application, this would be fetched from a database or API
+const equipmentDatabase: EquipmentItem[] = [
+  { id: '1', name: 'Sword', description: 'A sharp blade for melee combat', weight: 3, value: 15, classes: new Set(['Fighter', 'Paladin'] as (CharacterClass | 'All')[]), type: EquipmentType.Weapon, rarity: EquipmentRarity.Common },
+  { id: '2', name: 'Staff', description: 'A magical focus for spellcasting', weight: 2, value: 10, classes: new Set(['Wizard', 'Sorcerer'] as (CharacterClass | 'All')[]), type: EquipmentType.Weapon, rarity: EquipmentRarity.Common },
+  { id: '3', name: 'Bow', description: 'A ranged weapon for precise attacks', weight: 2, value: 25, classes: new Set(['Ranger', 'Rogue'] as (CharacterClass | 'All')[]), type: EquipmentType.Weapon, rarity: EquipmentRarity.Common },
+  { id: '4', name: 'Shield', description: 'Protective gear to block attacks', weight: 6, value: 10, classes: new Set(['Fighter', 'Paladin', 'Cleric'] as (CharacterClass | 'All')[]), type: EquipmentType.Armor, rarity: EquipmentRarity.Common },
+  { id: '5', name: 'Healing Potion', description: 'Restores health when consumed', weight: 0.5, value: 50, classes: new Set(['All'] as (CharacterClass | 'All')[]), type: EquipmentType.Potion, rarity: EquipmentRarity.Common },
+];
+
+// Pre-compute equipment by class for faster lookups
+const equipmentByClass: Record<CharacterClass | 'All', EquipmentItem[]> = {
+  Fighter: [],
+  Wizard: [],
+  Rogue: [],
+  Cleric: [],
+  Paladin: [],
+  Ranger: [],
+  Sorcerer: [],
+  All: [],
+};
+
+equipmentDatabase.forEach(item => {
+  item.classes.forEach(cls => {
+    if (cls === 'All') {
+      Object.values(equipmentByClass).forEach(classEquipment => classEquipment.push(item));
+    } else {
+      equipmentByClass[cls as CharacterClass].push(item);
+    }
+  });
+});
+
+/**
+ * Fetches equipment items based on the character's class.
+ * @param characterClass - The class of the character.
+ * @returns A Promise that resolves to an array of EquipmentItem objects.
+ */
+export const getEquipmentByClass = async (characterClass: CharacterClass): Promise<EquipmentItem[]> => {
+  logger.debug('Fetching equipment for class', { characterClass });
+  
+  try {
+    // Simulate an API call with a delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const classEquipment = [...equipmentByClass[characterClass], ...equipmentByClass['All']];
+    
+    logger.debug('Equipment fetched successfully', { 
+      characterClass, 
+      itemCount: classEquipment.length 
+    });
+    
+    return classEquipment;
+  } catch (error) {
+    logger.error('Error fetching equipment', { characterClass, error });
+    throw new EquipmentError('Failed to fetch equipment', { characterClass });
+  }
+};
+
+/**
+ * Calculates the total weight of the given equipment items.
+ * @param equipment - An array of equipment item names.
+ * @returns The total weight of the equipment.
+ */
+export const calculateEquipmentWeight = (equipment: string[]): number => {
+  logger.debug('Calculating equipment weight', { equipmentCount: equipment.length });
+  
+  const totalWeight = equipment.reduce((acc, itemName) => {
+    const item = equipmentDatabase.find(dbItem => dbItem.name === itemName);
+    if (item) {
+      return acc + item.weight;
+    }
+    logger.error('Equipment item not found in database', { itemName });
+    return acc;
+  }, 0);
+  
+  logger.debug('Equipment weight calculated', { totalWeight });
+  return totalWeight;
+};
+
+/**
+ * Calculates the total value of the given equipment items.
+ * @param equipment - An array of equipment item names.
+ * @returns The total value of the equipment.
+ */
+export const calculateEquipmentValue = (equipment: string[]): number => {
+  logger.debug('Calculating equipment value', { equipmentCount: equipment.length });
+  
+  const totalValue = equipment.reduce((acc, itemName) => {
+    const item = equipmentDatabase.find(dbItem => dbItem.name === itemName);
+    if (item) {
+      return acc + item.value;
+    }
+    logger.error('Equipment item not found in database', { itemName });
+    return acc;
+  }, 0);
+  
+  logger.debug('Equipment value calculated', { totalValue });
+  return totalValue;
+};
+
+/**
+ * Checks if a character can equip a specific item based on their class.
+ * @param itemName - The name of the item to check.
+ * @param characterClass - The class of the character.
+ * @returns A boolean indicating whether the character can equip the item.
+ */
+export const canEquipItem = (itemName: string, characterClass: CharacterClass): boolean => {
+  logger.debug('Checking if character can equip item', { itemName, characterClass });
+  
+  const item = equipmentDatabase.find(dbItem => dbItem.name === itemName);
+  if (!item) {
+    logger.error('Equipment item not found in database', { itemName });
+    return false;
+  }
+  
+  const canEquip = item.classes.has(characterClass as CharacterClass | 'All') || item.classes.has('All');
+  logger.debug('Equipment check result', { itemName, characterClass, canEquip });
+  
+  return canEquip;
+};
+
+// Named export for the equipment utilities
+export const equipmentUtils = {
+  getEquipmentByClass,
+  calculateEquipmentWeight,
+  calculateEquipmentValue,
+  canEquipItem,
+};
+
+// Default export
+export default equipmentUtils;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/utils/logger.ts ---
+import chalk from 'chalk';
+
+// Enum for log levels
+export enum LogLevel {
+  DEBUG = 0,
+  INFO = 1,
+  WARN = 2,
+  ERROR = 3,
+}
+
+// Configuration object for the logger
+interface LoggerConfig {
+  level: LogLevel;
+  enableConsole: boolean;
+  enableFile: boolean;
+  filePath?: string;
+}
+
+// Default configuration
+const defaultConfig: LoggerConfig = {
+  level: LogLevel.INFO,
+  enableConsole: true,
+  enableFile: false,
+};
+
+let config: LoggerConfig = { ...defaultConfig };
+
+// Logger interface
+interface Logger {
+  configureLogger: (newConfig: Partial<LoggerConfig>) => void;
+  debug: (message: string, metadata?: any) => void;
+  info: (message: string, metadata?: any) => void;
+  warn: (message: string, metadata?: any) => void;
+  error: (message: string, metadata?: any) => void;
+}
+
+/**
+ * Formats the log message with a timestamp and optional metadata.
+ * @param level - The log level.
+ * @param message - The main log message.
+ * @param metadata - Optional metadata to include in the log.
+ * @returns Formatted log string.
+ */
+function formatLog(level: LogLevel, message: string, metadata?: any): string {
+  const timestamp = new Date().toISOString();
+  const levelString = LogLevel[level].padEnd(5);
+  const metadataString = metadata ? ` ${JSON.stringify(metadata)}` : '';
+  return `[${timestamp}] ${levelString} - ${message}${metadataString}`;
+}
+
+/**
+ * Logs a message to the console with color-coding based on log level.
+ * @param level - The log level.
+ * @param message - The log message.
+ * @param metadata - Optional metadata to include in the log.
+ */
+function logToConsole(level: LogLevel, message: string, metadata?: any): void {
+  const formattedMessage = formatLog(level, message, metadata);
+  switch (level) {
+    case LogLevel.DEBUG:
+      console.log(chalk.gray(formattedMessage));
+      break;
+    case LogLevel.INFO:
+      console.log(chalk.blue(formattedMessage));
+      break;
+    case LogLevel.WARN:
+      console.warn(chalk.yellow(formattedMessage));
+      break;
+    case LogLevel.ERROR:
+      console.error(chalk.red(formattedMessage));
+      break;
+  }
+}
+
+/**
+ * Logs a message to a file (placeholder for future implementation).
+ * @param level - The log level.
+ * @param message - The log message.
+ * @param metadata - Optional metadata to include in the log.
+ */
+function logToFile(level: LogLevel, message: string, metadata?: any): void {
+  // Placeholder for file logging implementation
+  // This would typically involve writing to a file using Node.js fs module
+  console.log('File logging not implemented yet.');
+}
+
+/**
+ * Main logging function that respects the configured log level and outputs.
+ * @param level - The log level.
+ * @param message - The log message.
+ * @param metadata - Optional metadata to include in the log.
+ */
+function log(level: LogLevel, message: string, metadata?: any): void {
+  if (level >= config.level) {
+    if (config.enableConsole) {
+      logToConsole(level, message, metadata);
+    }
+    if (config.enableFile && config.filePath) {
+      logToFile(level, message, metadata);
+    }
+  }
+}
+
+// Create a logger object with all functions
+const createLogger = (): Logger => ({
+  configureLogger: (newConfig: Partial<LoggerConfig>) => {
+    config = { ...config, ...newConfig };
+  },
+  debug: (message: string, metadata?: any) => log(LogLevel.DEBUG, message, metadata),
+  info: (message: string, metadata?: any) => log(LogLevel.INFO, message, metadata),
+  warn: (message: string, metadata?: any) => log(LogLevel.WARN, message, metadata),
+  error: (message: string, metadata?: any) => log(LogLevel.ERROR, message, metadata),
+});
+
+// Lazy initialization of the logger
+let loggerInstance: Logger | null = null;
+
+const getLogger = (): Logger => {
+  if (!loggerInstance) {
+    loggerInstance = createLogger();
+  }
+  return loggerInstance;
+};
+
+// Add these lines for backwards compatibility
+export const logDebug = (message: string, metadata?: any) => getLogger().debug(message, metadata);
+export const logInfo = (message: string, metadata?: any) => getLogger().info(message, metadata);
+export const logWarn = (message: string, metadata?: any) => getLogger().warn(message, metadata);
+export const logError = (message: string, metadata?: any) => getLogger().error(message, metadata);
+
+export default getLogger;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/components/ProtectedRoute.tsx ---
+'use client';
+
+import React, { useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
+import { RootState } from '../lib/store';
+
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const user = useSelector((state: RootState) => state.user.user);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login');
+    }
+  }, [user, router]);
+
+  if (!user) {
+    return null; // or a loading spinner
+  }
+
+  return <>{children}</>;
+};
+
+export default ProtectedRoute;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/components/DynamicFirebaseComponent.tsx ---
+import dynamic from 'next/dynamic';
+
+const DynamicFirebaseComponent = dynamic(
+  () => import('./FirebaseComponent'),
+  { ssr: false }
+);
+
+export default DynamicFirebaseComponent;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/components/ClientProvider.tsx ---
+'use client';
+
+import React from 'react';
+import { Provider } from 'react-redux';
+import { store } from '../lib/store';
+
+export default function ClientProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <Provider store={store}>{children}</Provider>;
+}
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/components/CharacterStats.tsx ---
+import React from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '../lib/store';
+import { CharacterState } from '../lib/characterSlice'; // Update this import
+
+const CharacterStats: React.FC = () => {
+  const character = useSelector((state: RootState) => state.character);
+
+  return (
+    <div className="bg-gray-100 p-4 rounded-lg shadow">
+      <h2 className="text-xl font-bold mb-2">{character.name}</h2>
+      <p>Race: {character.race}</p>
+      <p>Class: {character.class}</p>
+      <p>Level: {character.level}</p>
+      <h3 className="text-lg font-semibold mt-4 mb-2">Attributes</h3>
+      {Object.entries(character.attributes).map(([attr, value]) => (
+        <p key={attr}>{attr.charAt(0).toUpperCase() + attr.slice(1)}: {value}</p>
+      ))}
+      <h3 className="text-lg font-semibold mt-4 mb-2">Skills</h3>
+      <p>{Array.from(character.skills).join(', ')}</p>
+      <h3 className="text-lg font-semibold mt-4 mb-2">Equipment</h3>
+      <p>{character.equipment.join(', ')}</p>
+      <h3 className="text-lg font-semibold mt-4 mb-2">Background</h3>
+      <p>Name: {character.background.name}</p>
+      <p>Personality Traits: {character.background.personalityTraits.join(', ')}</p>
+      <p>Ideals: {character.background.ideals.join(', ')}</p>
+      <p>Bonds: {character.background.bonds.join(', ')}</p>
+      <p>Flaws: {character.background.flaws.join(', ')}</p>
+      <h3 className="text-lg font-semibold mt-4 mb-2">Stats</h3>
+      <p>Health: {character.health}</p>
+      <p>Mana: {character.mana}</p>
+      <p>XP: {character.xp}</p>
+    </div>
+  );
+};
+
+export default CharacterStats;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/components/FirebaseComponent.tsx ---
+import { useEffect, useState } from 'react';
+import useFirebase from '../hooks/useFirebase';
+
+const FirebaseComponent = () => {
+  const [firebaseInitialized, setFirebaseInitialized] = useState(false);
+  const firebase = useFirebase();
+
+  useEffect(() => {
+    if (firebase) {
+      setFirebaseInitialized(true);
+    }
+  }, [firebase]);
+
+  if (!firebaseInitialized) {
+    return <div>Loading...</div>;
+  }
+
+  // Your component logic here
+};
+
+export default FirebaseComponent;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/components/Layout.tsx ---
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import { useSelector, useDispatch } from 'react-redux';
+import { useRouter } from 'next/navigation';
+import { Box, Flex, Heading, Button, VStack, HStack, Text } from "@chakra-ui/react";
+import { RootState } from '../lib/store';
+import { signOutUser } from '../lib/firebase';
+import { clearUser } from '../lib/userSlice';
+
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const user = useSelector((state: RootState) => state.user.user);
+  const dispatch = useDispatch();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      await signOutUser();
+      dispatch(clearUser());
+      router.push('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  return (
+    <Box minHeight="100vh" bg="parchment.50">
+      <Flex as="nav" align="center" justify="space-between" wrap="wrap" padding="1.5rem" bg="brand.700" color="white">
+        <Flex align="center" mr={5}>
+          <Heading as="h1" size="lg" letterSpacing={'tighter'}>
+            D&D Next.js
+          </Heading>
+        </Flex>
+
+        <HStack spacing={4}>
+          <Link href="/" passHref>
+            <Button as="a" variant="ghost">Home</Button>
+          </Link>
+          <Link href="/character-creation" passHref>
+            <Button as="a" variant="ghost">Create Character</Button>
+          </Link>
+          <Link href="/game" passHref>
+            <Button as="a" variant="ghost">Play Game</Button>
+          </Link>
+          <Link href="/inventory" passHref>
+            <Button as="a" variant="ghost">Inventory</Button>
+          </Link>
+          {user ? (
+            <>
+              <Text>{user.email}</Text>
+              <Button onClick={handleSignOut} variant="outline">Sign Out</Button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" passHref>
+                <Button as="a" variant="outline">Login</Button>
+              </Link>
+              <Link href="/signup" passHref>
+                <Button as="a" variant="solid" colorScheme="brand">Sign Up</Button>
+              </Link>
+            </>
+          )}
+        </HStack>
+      </Flex>
+      <VStack spacing={8} p={8}>
+        {children}
+      </VStack>
+    </Box>
+  );
+};
+
+export default Layout;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/components/HomeContent.tsx ---
+'use client';
+
+import React from 'react';
+import { useSelector } from 'react-redux';
+import Link from 'next/link';
+import { RootState } from '../lib/store';
+
+const HomeContent: React.FC = () => {
+  const user = useSelector((state: RootState) => state.user?.user);
+
+  return (
+    <>
+      {user ? (
+        <div>
+          <p className="mb-4">Welcome back, {user.email}!</p>
+          <Link href="/game" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Start Playing
+          </Link>
+        </div>
+      ) : (
+        <div>
+          <p className="mb-4">Please sign up or log in to start your adventure!</p>
+          <div className="space-x-4">
+            <Link href="/signup" className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+              Sign Up
+            </Link>
+            <Link href="/login" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+              Log In
+            </Link>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default HomeContent;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/components/FirebaseProvider.tsx ---
+'use client';
+
+import React, { useEffect, useState, createContext, useContext } from 'react';
+import { FirebaseApp } from 'firebase/app';
+import { getApp } from '../lib/firebase';
+
+interface FirebaseContextType {
+  app: FirebaseApp | null;
+}
+
+const FirebaseContext = createContext<FirebaseContextType>({ app: null });
+
+export function useFirebase() {
+  return useContext(FirebaseContext);
+}
+
+export function FirebaseProvider({ children }: { children: React.ReactNode }) {
+  const [app, setApp] = useState<FirebaseApp | null>(null);
+
+  useEffect(() => {
+    const initializeFirebase = async () => {
+      try {
+        const firebaseApp = await getApp();
+        setApp(firebaseApp);
+      } catch (error) {
+        console.error('Failed to initialize Firebase:', error);
+      }
+    };
+
+    initializeFirebase();
+  }, []);
+
+  return (
+    <FirebaseContext.Provider value={{ app }}>
+      {app ? children : <div>Loading...</div>}
+    </FirebaseContext.Provider>
+  );
+}
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/components/Providers.tsx ---
+'use client';
+
+import React from 'react';
+import { Provider } from 'react-redux';
+import { store } from '../lib/store';
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return <Provider store={store}>{children}</Provider>;
+}
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/components/character-creation/Attributes.tsx ---
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../lib/store';
+import { updateAttribute } from '../../lib/characterSlice';
+import { VStack, HStack, Text, Button } from "@chakra-ui/react";
+import AttributeBox from './AttributeBox';
+
+interface Attributes {
+  strength: number;
+  dexterity: number;
+  constitution: number;
+  intelligence: number;
+  wisdom: number;
+  charisma: number;
+}
+
+const Attributes: React.FC = () => {
+  const dispatch = useDispatch();
+  const character = useSelector((state: RootState) => state.character);
+
+  const handleAttributeChange = (attribute: keyof Attributes, change: number) => {
+    const newValue = character.attributes[attribute] + change;
+    if (newValue >= 8 && newValue <= 15 && character.attributePoints - change >= 0) {
+      dispatch(updateAttribute({ attribute, value: newValue }));
+    }
+  };
+
+  return (
+    <VStack spacing={6} align="stretch">
+      <Text fontSize="2xl" fontWeight="bold">Attributes</Text>
+      <Text>Points remaining: {character.attributePoints}</Text>
+      <HStack spacing={4} flexWrap="wrap" justifyContent="center">
+        {(Object.entries(character.attributes) as [keyof Attributes, number][]).map(([attr, value]) => (
+          <VStack key={attr}>
+            <AttributeBox name={attr} value={value} max={15} />
+            <HStack>
+              <Button size="sm" onClick={() => handleAttributeChange(attr, -1)} isDisabled={value <= 8}>-</Button>
+              <Button size="sm" onClick={() => handleAttributeChange(attr, 1)} isDisabled={value >= 15 || character.attributePoints <= 0}>+</Button>
+            </HStack>
+          </VStack>
+        ))}
+      </HStack>
+    </VStack>
+  );
+};
+
+export default Attributes;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/components/character-creation/BasicInfo.tsx ---
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { VStack, FormControl, FormLabel, Input, Select } from "@chakra-ui/react";
+import { RootState } from '../../lib/store';
+import { updateCharacterInfo } from '../../lib/characterSlice';
+
+const BasicInfo: React.FC = () => {
+  const dispatch = useDispatch();
+  const character = useSelector((state: RootState) => state.character);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    dispatch(updateCharacterInfo({ [e.target.name]: e.target.value }));
+  };
+
+  return (
+    <VStack spacing={4} align="stretch">
+      <FormControl>
+        <FormLabel htmlFor="name">Character Name</FormLabel>
+        <Input
+          id="name"
+          name="name"
+          value={character.name}
+          onChange={handleInputChange}
+          placeholder="Enter character name"
+        />
+      </FormControl>
+      <FormControl>
+        <FormLabel htmlFor="race">Race</FormLabel>
+        <Select
+          id="race"
+          name="race"
+          value={character.race}
+          onChange={handleInputChange}
+          placeholder="Select race"
+        >
+          <option value="Human">Human</option>
+          <option value="Elf">Elf</option>
+          <option value="Dwarf">Dwarf</option>
+          <option value="Halfling">Halfling</option>
+        </Select>
+      </FormControl>
+      <FormControl>
+        <FormLabel htmlFor="class">Class</FormLabel>
+        <Select
+          id="class"
+          name="class"
+          value={character.class}
+          onChange={handleInputChange}
+          placeholder="Select class"
+        >
+          <option value="Fighter">Fighter</option>
+          <option value="Wizard">Wizard</option>
+          <option value="Rogue">Rogue</option>
+          <option value="Cleric">Cleric</option>
+        </Select>
+      </FormControl>
+    </VStack>
+  );
+};
+
+export default BasicInfo;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/components/character-creation/Background.tsx ---
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { VStack, Heading, FormControl, FormLabel, Input, Textarea } from "@chakra-ui/react";
+import { RootState } from '../../lib/store';
+import { updateBackground, Background } from '../../lib/characterSlice';
+
+const BackgroundComponent: React.FC = () => {
+  const dispatch = useDispatch();
+  const character = useSelector((state: RootState) => state.character);
+
+  const handleBackgroundChange = (field: keyof Background, value: string | string[]) => {
+    dispatch(updateBackground({ field, value }));
+  };
+
+  return (
+    <VStack spacing={6} align="stretch">
+      <Heading as="h2" size="lg" color="brand.700">Background</Heading>
+      <FormControl>
+        <FormLabel htmlFor="backgroundName">Background Name</FormLabel>
+        <Input
+          id="backgroundName"
+          value={character.background.name}
+          onChange={(e) => handleBackgroundChange('name', e.target.value)}
+          placeholder="Enter background name"
+        />
+      </FormControl>
+      <FormControl>
+        <FormLabel htmlFor="personalityTraits">Personality Traits</FormLabel>
+        <Textarea
+          id="personalityTraits"
+          value={character.background.personalityTraits.join(', ')}
+          onChange={(e) => handleBackgroundChange('personalityTraits', e.target.value.split(', ').filter(Boolean))}
+          placeholder="Enter personality traits (comma separated)"
+          rows={3}
+        />
+      </FormControl>
+      <FormControl>
+        <FormLabel htmlFor="ideals">Ideals</FormLabel>
+        <Textarea
+          id="ideals"
+          value={character.background.ideals.join(', ')}
+          onChange={(e) => handleBackgroundChange('ideals', e.target.value.split(', ').filter(Boolean))}
+          placeholder="Enter ideals (comma separated)"
+          rows={3}
+        />
+      </FormControl>
+      <FormControl>
+        <FormLabel htmlFor="bonds">Bonds</FormLabel>
+        <Textarea
+          id="bonds"
+          value={character.background.bonds.join(', ')}
+          onChange={(e) => handleBackgroundChange('bonds', e.target.value.split(', ').filter(Boolean))}
+          placeholder="Enter bonds (comma separated)"
+          rows={3}
+        />
+      </FormControl>
+      <FormControl>
+        <FormLabel htmlFor="flaws">Flaws</FormLabel>
+        <Textarea
+          id="flaws"
+          value={character.background.flaws.join(', ')}
+          onChange={(e) => handleBackgroundChange('flaws', e.target.value.split(', ').filter(Boolean))}
+          placeholder="Enter flaws (comma separated)"
+          rows={3}
+        />
+      </FormControl>
+    </VStack>
+  );
+};
+
+export default BackgroundComponent;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/components/character-creation/Equipment.tsx ---
+import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { Box, Heading, VStack, Checkbox, Button, Text } from "@chakra-ui/react";
+import { RootState } from '../../lib/store';
+import { updateCharacterInfo } from '../../lib/characterSlice';
+import { CharacterState } from '../../lib/characterSlice';
+import { EquipmentItem } from '../../types/equipment';
+import { getEquipmentByClass } from '../../utils/equipmentUtils';
+import { logDebug } from '../../utils/logger';
+import { CharacterClass } from '../../types/character'; // Add this import
+
+const Equipment: React.FC = () => {
+  const dispatch = useDispatch();
+  const character = useSelector((state: RootState) => state.character);
+  const [availableEquipment, setAvailableEquipment] = useState<EquipmentItem[]>([]);
+  const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Fetch available equipment based on character class
+    const fetchEquipment = async () => {
+      try {
+        // Cast character.class to CharacterClass
+        const equipment = await getEquipmentByClass(character.class as CharacterClass);
+        setAvailableEquipment(equipment);
+        logDebug('Equipment fetched successfully', { class: character.class, equipmentCount: equipment.length });
+      } catch (error) {
+        logDebug('Error fetching equipment', { error });
+      }
+    };
+
+    fetchEquipment();
+  }, [character.class]);
+
+  const handleEquipmentChange = (itemName: string) => {
+    setSelectedEquipment(prev => {
+      if (prev.includes(itemName)) {
+        return prev.filter(item => item !== itemName);
+      } else {
+        return [...prev, itemName];
+      }
+    });
+  };
+
+  const handleSubmit = () => {
+    dispatch(updateCharacterInfo({ equipment: selectedEquipment }));
+    logDebug('Equipment updated', { selectedEquipment });
+  };
+
+  return (
+    <Box bg="parchment.100" p={6} borderRadius="md" boxShadow="md">
+      <Heading as="h2" size="lg" mb={4}>Select Your Equipment</Heading>
+      <VStack align="start" spacing={4}>
+        {availableEquipment.map((item) => (
+          <Checkbox
+            key={item.id}
+            isChecked={selectedEquipment.includes(item.name)}
+            onChange={() => handleEquipmentChange(item.name)}
+          >
+            {item.name} - {item.description}
+          </Checkbox>
+        ))}
+      </VStack>
+      <Text mt={4}>Selected items: {selectedEquipment.length}</Text>
+      <Button
+        mt={6}
+        colorScheme="brand"
+        onClick={handleSubmit}
+        isDisabled={selectedEquipment.length === 0}
+      >
+        Confirm Equipment
+      </Button>
+    </Box>
+  );
+};
+
+export default Equipment;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/components/character-creation/AttributeBox.tsx ---
+import React from 'react';
+import { Box, Text, VStack, HStack, CircularProgress, CircularProgressLabel } from "@chakra-ui/react";
+
+interface AttributeBoxProps {
+  name: string;
+  value: number;
+  max: number;
+}
+
+const AttributeBox: React.FC<AttributeBoxProps> = ({ name, value, max }) => {
+  const percentage = (value / max) * 100;
+
+  return (
+    <Box borderWidth={2} borderRadius="lg" p={4} borderColor="brand.500" bg="white">
+      <VStack spacing={2} align="center">
+        <Text fontWeight="bold" fontSize="lg">{name}</Text>
+        <HStack spacing={4}>
+          <CircularProgress value={percentage} color="brand.500" size="60px">
+            <CircularProgressLabel>{value}</CircularProgressLabel>
+          </CircularProgress>
+          <Text>/ {max}</Text>
+        </HStack>
+      </VStack>
+    </Box>
+  );
+};
+
+export default AttributeBox;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/components/character-creation/Skills.tsx ---
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { VStack, Heading, SimpleGrid, Checkbox, Text } from "@chakra-ui/react";
+import { RootState } from '../../lib/store';
+import { addSkill, removeSkill } from '../../lib/characterSlice';
+
+const Skills: React.FC = () => {
+  const dispatch = useDispatch();
+  const character = useSelector((state: RootState) => state.character);
+
+  const handleSkillToggle = (skill: string) => {
+    if (character.skills.includes(skill)) {
+      dispatch(removeSkill(skill));
+    } else {
+      dispatch(addSkill(skill));
+    }
+  };
+
+  const allSkills = ['Acrobatics', 'Arcana', 'Athletics', 'Deception', 'History', 'Insight', 'Intimidation', 'Investigation', 'Medicine', 'Nature', 'Perception', 'Performance', 'Persuasion', 'Religion', 'Sleight of Hand', 'Stealth', 'Survival'];
+
+  return (
+    <VStack spacing={4} align="stretch">
+      <Heading as="h2" size="lg" color="brand.700">Skills</Heading>
+      <Text>Select your character&apos;s skills:</Text>
+      <SimpleGrid columns={[2, 3, 4]} spacing={4}>
+        {allSkills.map((skill) => (
+          <Checkbox
+            key={skill}
+            isChecked={character.skills.includes(skill)}
+            onChange={() => handleSkillToggle(skill)}
+            colorScheme="brand"
+          >
+            {skill}
+          </Checkbox>
+        ))}
+      </SimpleGrid>
+    </VStack>
+  );
+};
+
+export default Skills;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/components/client/ClientOnly.tsx ---
+'use client';
+
+import React, { useEffect, useState, ReactNode } from 'react';
+
+interface ClientOnlyProps {
+  children: ReactNode;
+}
+
+const ClientOnly: React.FC<ClientOnlyProps> = ({ children }) => {
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  if (!hasMounted) {
+    return null;
+  }
+
+  return <>{children}</>;
+};
+
+export default ClientOnly;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/components/client/LoginContext.tsx ---
+'use client';
+
+import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { useRouter } from 'next/navigation';
+import { Box, VStack, Heading, FormControl, FormLabel, Input, Button, Text, Link as ChakraLink } from "@chakra-ui/react";
+import { signIn } from '../../lib/firebase';
+import { setUser, setError } from '../../lib/userSlice';
+import NextLink from 'next/link';
+
+const LoginContent: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const dispatch = useDispatch();
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const user = await signIn(email, password);
+      dispatch(setUser({ uid: user.uid, email: user.email }));
+      router.push('/game');
+    } catch (error) {
+      dispatch(setError((error as Error).message));
+    }
+  };
+
+  return (
+    <VStack spacing={8} align="stretch" maxW="md" mx="auto" mt={8}>
+      <Heading as="h1" size="xl" textAlign="center" color="brand.700">Login</Heading>
+      <Box as="form" onSubmit={handleSubmit} bg="white" shadow="md" borderRadius="lg" p={8}>
+        <VStack spacing={4}>
+          <FormControl>
+            <FormLabel htmlFor="email">Email</FormLabel>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </FormControl>
+          <FormControl>
+            <FormLabel htmlFor="password">Password</FormLabel>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </FormControl>
+          <Button type="submit" colorScheme="brand" width="full">
+            Login
+          </Button>
+        </VStack>
+      </Box>
+      <Text textAlign="center">
+        Don&apos;t have an account?{' '}
+        <NextLink href="/signup" passHref>
+          <ChakraLink color="brand.500">Sign up</ChakraLink>
+        </NextLink>
+      </Text>
+    </VStack>
+  );
+};
+
+export default LoginContent;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/hooks/useFirebase.ts ---
+import { useState, useEffect } from 'react';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { getFunctions, Functions } from 'firebase/functions';
+import { getAnalytics, Analytics } from 'firebase/analytics';
+import { getFirebaseConfig } from '../utils/envCheck';
+
+interface FirebaseServices {
+  app: FirebaseApp;
+  auth: Auth;
+  firestore: Firestore;
+  storage: FirebaseStorage;
+  functions: Functions;
+  analytics: Analytics | null;
+}
+
+const useFirebase = (): FirebaseServices | null => {
+  const [services, setServices] = useState<FirebaseServices | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !getApps().length) {
+      const firebaseConfig = getFirebaseConfig();
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const firestore = getFirestore(app);
+      const storage = getStorage(app);
+      const functions = getFunctions(app);
+      let analytics: Analytics | null = null;
+
+      // Only initialize analytics on the client-side
+      if (process.env.NODE_ENV !== 'development') {
+        analytics = getAnalytics(app);
+      }
+
+      setServices({
+        app,
+        auth,
+        firestore,
+        storage,
+        functions,
+        analytics,
+      });
+    }
+  }, []);
+
+  return services;
+};
+
+export default useFirebase;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/lib/characterSlice.ts ---
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { smartLog } from './store'; // Import the smartLog function
+
+// Define the structure for character attributes
+export interface Attributes {
+  strength: number;
+  dexterity: number;
+  constitution: number;
+  intelligence: number;
+  wisdom: number;
+  charisma: number;
+}
+
+// Define the structure for character background
+export interface Background {
+  name: string;
+  personalityTraits: string[];
+  ideals: string[];
+  bonds: string[];
+  flaws: string[];
+}
+
+// Define the overall character state structure
+export interface CharacterState {
+  name: string;
+  race: string;
+  class: string;
+  attributes: Attributes;
+  skills: string[];
+  background: Background;
+  level: number;
+  health: number;
+  mana: number;
+  xp: number;
+  equipment: string[];
+  attributePoints: number;
+}
+
+// Initial state for a new character
+const initialState: CharacterState = {
+  name: '',
+  race: '',
+  class: '',
+  attributes: {
+    strength: 8,
+    dexterity: 8,
+    constitution: 8,
+    intelligence: 8,
+    wisdom: 8,
+    charisma: 8,
+  },
+  skills: [],
+  background: {
+    name: '',
+    personalityTraits: [],
+    ideals: [],
+    bonds: [],
+    flaws: [],
+  },
+  level: 1,
+  health: 0,
+  mana: 0,
+  xp: 0,
+  equipment: [],
+  attributePoints: 27, // Standard point-buy system
+};
+
+// Helper function to calculate point cost for attributes
+function calculatePointCost(value: number): number {
+  if (value <= 13) return value - 8;
+  if (value === 14) return 7;
+  if (value === 15) return 9;
+  return 0; // Invalid value
+}
+
+// Create the character slice
+const characterSlice = createSlice({
+  name: 'character',
+  initialState,
+  reducers: {
+    // Update multiple character properties at once
+    updateCharacterInfo: (state, action: PayloadAction<Partial<CharacterState>>) => {
+      Object.assign(state, action.payload);
+      smartLog('Character info updated', action.payload);
+    },
+    // Update a single attribute
+    updateAttribute: (state, action: PayloadAction<{ attribute: keyof Attributes; value: number }>) => {
+      const { attribute, value } = action.payload;
+      const oldValue = state.attributes[attribute];
+      const pointDifference = calculatePointCost(value) - calculatePointCost(oldValue);
+      
+      if (state.attributePoints >= pointDifference) {
+        state.attributes[attribute] = value;
+        state.attributePoints -= pointDifference;
+        smartLog(`Attribute ${attribute} updated`, { oldValue, newValue: value, remainingPoints: state.attributePoints });
+      } else {
+        smartLog(`Failed to update attribute ${attribute}`, { reason: 'Insufficient points' });
+      }
+    },
+    // Add a new skill
+    addSkill: (state, action: PayloadAction<string>) => {
+      if (!state.skills.includes(action.payload)) {
+        state.skills.push(action.payload);
+        smartLog('Skill added', action.payload);
+      } else {
+        smartLog('Skill not added', { reason: 'Skill already exists', skill: action.payload });
+      }
+    },
+    // Remove a skill
+    removeSkill: (state, action: PayloadAction<string>) => {
+      state.skills = state.skills.filter(skill => skill !== action.payload);
+      smartLog('Skill removed', action.payload);
+    },
+    // Update background information
+    updateBackground: (state, action: PayloadAction<{ field: keyof Background; value: string | string[] }>) => {
+      const { field, value } = action.payload;
+      if (field === 'name') {
+        state.background[field] = value as string;
+      } else {
+        state.background[field] = value as string[];
+      }
+      smartLog('Background updated', { field, value });
+    },
+    // Add equipment
+    addEquipment: (state, action: PayloadAction<string>) => {
+      state.equipment.push(action.payload);
+      smartLog('Equipment added', action.payload);
+    },
+    // Remove equipment
+    removeEquipment: (state, action: PayloadAction<string>) => {
+      state.equipment = state.equipment.filter(item => item !== action.payload);
+      smartLog('Equipment removed', action.payload);
+    },
+    // Level up the character
+    levelUp: (state) => {
+      state.level += 1;
+      // Here you could add logic for increasing health, mana, etc.
+      smartLog('Character leveled up', { newLevel: state.level });
+    },
+    // Gain experience points
+    gainXP: (state, action: PayloadAction<number>) => {
+      state.xp += action.payload;
+      smartLog('XP gained', { amount: action.payload, totalXP: state.xp });
+    },
+  },
+});
+
+// Export action creators
+export const {
+  updateCharacterInfo,
+  updateAttribute,
+  addSkill,
+  removeSkill,
+  updateBackground,
+  addEquipment,
+  removeEquipment,
+  levelUp,
+  gainXP,
+} = characterSlice.actions;
+
+// Export the reducer
+export default characterSlice.reducer;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/lib/firebase.ts ---
+// Import necessary Firebase modules
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, Firestore, DocumentData, QuerySnapshot } from 'firebase/firestore';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, User, Auth, onAuthStateChanged } from 'firebase/auth';
+import { getAnalytics, Analytics } from "firebase/analytics";
+
+// Import the CharacterState type from the correct relative path
+import type { CharacterState } from './characterSlice';
+import { checkRequiredEnvVars } from '../utils/envCheck';
+
+// Check for required environment variables
+const envVarsAvailable = checkRequiredEnvVars();
+
+// Log the result of environment variable check
+console.log(`Environment variables check: ${envVarsAvailable ? 'Passed' : 'Failed'}`);
+
+// Firebase configuration object
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+};
+
+// Log Firebase config (be careful not to log this in production)
+console.log('Firebase config:', JSON.stringify(firebaseConfig, null, 2));
+
+// Initialize Firebase
+let app: FirebaseApp;
+let db: Firestore;
+let auth: Auth;
+let analytics: Analytics | undefined;
+
+try {
+  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+  db = getFirestore(app);
+  auth = getAuth(app);
+  
+  // Initialize Analytics only on the client side
+  if (typeof window !== 'undefined') {
+    analytics = getAnalytics(app);
+    console.log('Firebase Analytics initialized');
+  }
+  
+  console.log('Firebase initialized successfully');
+} catch (error) {
+  console.error('Error initializing Firebase:', error);
+  throw error;
+}
+
+// Export initialized Firebase instances
+export { app, db, auth, analytics };
+
+// Add the getApp function
+export const getApp = (): Promise<FirebaseApp> => {
+  return new Promise((resolve, reject) => {
+    if (app) {
+      resolve(app);
+    } else {
+      const unsubscribe = onAuthStateChanged(auth, () => {
+        unsubscribe();
+        if (app) {
+          resolve(app);
+        } else {
+          reject(new Error('Firebase app not initialized'));
+        }
+      });
+    }
+  });
+};
+
+/**
+ * Sign up a new user
+ * @param email - User's email
+ * @param password - User's password
+ * @returns Promise resolving to the created User object
+ */
+export const signUp = async (email: string, password: string): Promise<User> => {
+  console.log(`Attempting to sign up user with email: ${email}`);
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    console.log(`User signed up successfully: ${userCredential.user.uid}`);
+    return userCredential.user;
+  } catch (error) {
+    console.error('Error during sign up:', error);
+    throw error;
+  }
+};
+
+/**
+ * Sign in an existing user
+ * @param email - User's email
+ * @param password - User's password
+ * @returns Promise resolving to the signed-in User object
+ */
+export const signIn = async (email: string, password: string): Promise<User> => {
+  console.log(`Attempting to sign in user with email: ${email}`);
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    console.log(`User signed in successfully: ${userCredential.user.uid}`);
+    return userCredential.user;
+  } catch (error) {
+    console.error('Error during sign in:', error);
+    throw error;
+  }
+};
+
+/**
+ * Sign out the current user
+ * @returns Promise that resolves when sign out is complete
+ */
+export const signOutUser = async (): Promise<void> => {
+  console.log('Attempting to sign out user');
+  try {
+    await signOut(auth);
+    console.log('User signed out successfully');
+  } catch (error) {
+    console.error('Error during sign out:', error);
+    throw error;
+  }
+};
+
+/**
+ * Save a character to Firestore
+ * @param character - The character data to save
+ * @returns Promise that resolves to the ID of the saved document
+ */
+export const saveCharacter = async (character: CharacterState): Promise<string> => {
+  console.log('Attempting to save character:', character);
+  try {
+    const docRef = await addDoc(collection(db, 'characters'), character);
+    console.log('Character saved successfully with ID:', docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error saving character:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all characters for the current user
+ * @returns Promise resolving to an array of character documents
+ */
+export const getCharacters = async (): Promise<DocumentData[]> => {
+  console.log('Fetching characters for current user');
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error('No user is currently signed in');
+
+    const querySnapshot: QuerySnapshot = await getDocs(collection(db, 'characters'));
+    const characters = querySnapshot.docs
+      .map(doc => {
+        const data = doc.data();
+        return { id: doc.id, ...data, userId: data.userId };
+      })
+      .filter(char => char.userId === user.uid);
+
+    console.log(`Fetched ${characters.length} characters for user ${user.uid}`);
+    return characters;
+  } catch (error) {
+    console.error('Error fetching characters:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update an existing character
+ * @param characterId - The ID of the character to update
+ * @param updates - The updates to apply to the character
+ * @returns Promise that resolves when the update is complete
+ */
+export const updateCharacter = async (characterId: string, updates: Partial<CharacterState>): Promise<void> => {
+  console.log(`Attempting to update character with ID: ${characterId}`);
+  try {
+    const characterRef = doc(db, 'characters', characterId);
+    await updateDoc(characterRef, updates);
+    console.log('Character updated successfully');
+  } catch (error) {
+    console.error('Error updating character:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete a character
+ * @param characterId - The ID of the character to delete
+ * @returns Promise that resolves when the deletion is complete
+ */
+export const deleteCharacter = async (characterId: string): Promise<void> => {
+  console.log(`Attempting to delete character with ID: ${characterId}`);
+  try {
+    await deleteDoc(doc(db, 'characters', characterId));
+    console.log('Character deleted successfully');
+  } catch (error) {
+    console.error('Error deleting character:', error);
+    throw error;
+  }
+};
+
+/**
+ * Listen to auth state changes
+ * @param callback - Function to call when auth state changes
+ * @returns Unsubscribe function
+ */
+export const onAuthStateChange = (callback: (user: User | null) => void) => {
+  return onAuthStateChanged(auth, callback);
+};
+
+// Export types for use in other files
+export type { User, Auth, Firestore, Analytics };
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/lib/userSlice.ts ---
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { smartLog } from './store'; // Import the smartLog function
+
+// Define the structure for the user object
+interface User {
+  uid: string;
+  email: string | null;
+  displayName?: string;
+  photoURL?: string;
+}
+
+// Define the overall user state structure
+export interface UserState {
+  user: User | null;
+  loading: boolean;
+  error: string | null;
+  lastLogin: Date | null;
+}
+
+// Initial state for the user slice
+const initialState: UserState = {
+  user: null,
+  loading: false,
+  error: null,
+  lastLogin: null,
+};
+
+// Create the user slice
+const userSlice = createSlice({
+  name: 'user',
+  initialState,
+  reducers: {
+    // Set the user information
+    setUser: (state, action: PayloadAction<User>) => {
+      state.user = action.payload;
+      state.loading = false;
+      state.error = null;
+      state.lastLogin = new Date();
+      smartLog('User set', { user: action.payload });
+    },
+    // Update the loading state
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
+      smartLog('Loading state updated', { loading: action.payload });
+    },
+    // Set an error message
+    setError: (state, action: PayloadAction<string>) => {
+      state.error = action.payload;
+      state.loading = false;
+      smartLog('Error set', { error: action.payload });
+    },
+    // Clear the user information (logout)
+    clearUser: (state) => {
+      state.user = null;
+      state.loading = false;
+      state.error = null;
+      state.lastLogin = null;
+      smartLog('User cleared');
+    },
+    // Update specific user fields
+    updateUserField: (state, action: PayloadAction<Partial<User>>) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+        smartLog('User field updated', { updatedFields: action.payload });
+      } else {
+        smartLog('Failed to update user field', { reason: 'User is null' });
+      }
+    },
+  },
+});
+
+// Export action creators
+export const { setUser, setLoading, setError, clearUser, updateUserField } = userSlice.actions;
+
+// Export the reducer
+export default userSlice.reducer;
+
+// Selector to get the current user
+export const selectUser = (state: { user: UserState }) => state.user.user;
+
+// Selector to get the loading state
+export const selectLoading = (state: { user: UserState }) => state.user.loading;
+
+// Selector to get the error state
+export const selectError = (state: { user: UserState }) => state.user.error;
+
+// Selector to get the last login time
+export const selectLastLogin = (state: { user: UserState }) => state.user.lastLogin;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/lib/middlewareTypes.ts ---
+export interface Middleware {
+    // Define common middleware interface
+  }
+  
+  export interface ClassMiddleware extends Middleware {
+    // Class-specific middleware properties
+  }
+  
+  export interface RaceMiddleware extends Middleware {
+    // Race-specific middleware properties
+  }
+  
+  export interface StatsMiddleware extends Middleware {
+    // Stats-specific middleware properties
+  }
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/lib/configureStore.ts ---
+import { configureStore } from '@reduxjs/toolkit';
+import characterReducer from './characterSlice';
+import userReducer from './userSlice';
+
+export const store = configureStore({
+  reducer: {
+    character: characterReducer,
+    user: userReducer,
+  },
+});
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/lib/types.ts ---
+import { Store, Middleware as ReduxMiddleware, Action as ReduxAction, Dispatch } from '@reduxjs/toolkit';
+
+// Character related types
+export interface Character {
+  id: string;
+  name: string;
+  race: string;
+  class: string;
+  level: number;
+  experience: number;
+  attributes: {
+    strength: number;
+    dexterity: number;
+    constitution: number;
+    intelligence: number;
+    wisdom: number;
+    charisma: number;
+  };
+  skills: Record<string, number>;
+  inventory: InventoryItem[];
+  health: {
+    current: number;
+    max: number;
+  };
+  mana: {
+    current: number;
+    max: number;
+  };
+}
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  description: string;
+  quantity: number;
+}
+
+// User related types
+export interface User {
+  id: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+}
+
+// Store related types
+export interface CharacterState {
+  currentCharacter: Character | null;
+  characters: Character[];
+  loading: boolean;
+  error: string | null;
+}
+
+export interface UserState {
+  currentUser: User | null;
+  loading: boolean;
+  error: string | null;
+}
+
+export interface RootState {
+  character: CharacterState;
+  user: UserState;
+  // Add other slices as needed
+}
+
+export type AppStore = Store<RootState>;
+export type AppDispatch = AppStore['dispatch'];
+
+// Rule Engine related types
+export interface GameMiddleware {
+  apply: (state: CharacterState, action: ReduxAction) => CharacterState;
+}
+
+export interface ClassMiddleware extends GameMiddleware {}
+export interface RaceMiddleware extends GameMiddleware {}
+export interface StatsMiddleware extends GameMiddleware {}
+
+export type RuleEngineMiddleware = ReduxMiddleware<{}, RootState>;
+
+// Action types
+export interface Action<T = any> extends ReduxAction<string> {
+  payload?: T;
+}
+
+// Thunk types
+export type ThunkAction<ReturnType = void, ExtraArgument = unknown> = (
+  dispatch: AppDispatch,
+  getState: () => RootState,
+  extraArgument: ExtraArgument
+) => ReturnType;
+
+export type AppThunk<ReturnType = void> = ThunkAction<ReturnType, unknown>;
+
+// Middleware types
+export type MiddlewareAPI = {
+  dispatch: AppDispatch;
+  getState: () => RootState;
+};
+
+export type Middleware = (
+  api: MiddlewareAPI
+) => (next: Dispatch) => (action: Action) => ReturnType<Dispatch>;
+
+// Utility types
+export type DeepPartial<T> = {
+  [P in keyof T]?: DeepPartial<T[P]>;
+};
+
+export type ActionCreator<T = void> = (...args: any[]) => Action<T>;
+
+export type ActionCreatorsMapObject = {
+  [actionCreator: string]: ActionCreator;
+};
+
+// Enum types
+export enum CharacterClass {
+  Fighter = 'Fighter',
+  Wizard = 'Wizard',
+  Rogue = 'Rogue',
+  Cleric = 'Cleric',
+}
+
+export enum Race {
+  Human = 'Human',
+  Elf = 'Elf',
+  Dwarf = 'Dwarf',
+  Halfling = 'Halfling',
+}
+
+// Add any other shared types or interfaces here
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/lib/ruleEngine.ts ---
+import { Middleware, MiddlewareAPI, Dispatch, AnyAction } from '@reduxjs/toolkit';
+import { RootState } from './store'; // Update this import
+import { raceMiddleware } from './middlewares/raceMiddleware';
+import { classMiddleware } from './middlewares/classMiddleware';
+import { statsMiddleware } from './middlewares/statsMiddleware';
+
+// Updated RuleEngineMiddleware type to match Redux's Middleware type
+type RuleEngineMiddleware = Middleware<{}, RootState>; 
+
+// No changes are needed for the composeMiddleware function
+
+const composeMiddleware = (...middlewares: RuleEngineMiddleware[]): RuleEngineMiddleware => {
+  return (api) => (next) => (action) => {
+    let dispatch = next;
+    middlewares.reverse().forEach(middleware => {
+      dispatch = middleware(api)(dispatch);
+    });
+    return dispatch(action);
+  };
+};
+
+export const ruleEngine = composeMiddleware(
+  raceMiddleware,
+  classMiddleware,
+  statsMiddleware
+);
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/lib/rootReducer.ts ---
+import { combineReducers } from '@reduxjs/toolkit';
+import characterReducer from './characterSlice';
+import userReducer from './userSlice';
+
+const rootReducer = combineReducers({
+  character: characterReducer,
+  user: userReducer,
+  // Add other reducers here as needed
+});
+
+export type RootState = ReturnType<typeof rootReducer>;
+
+export default rootReducer;
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/lib/store.ts ---
+import { configureStore, ThunkAction, Action, Middleware, combineReducers } from '@reduxjs/toolkit';
+import { createLogger } from 'redux-logger';
+import characterReducer, { CharacterState } from "./characterSlice";
+import userReducer, { UserState } from "./userSlice";
+import { ruleEngine } from './ruleEngine';
+
+// Custom logger configuration
+const logger = createLogger({
+  collapsed: true,
+  diff: true,
+});
+
+// Create a root reducer
+const rootReducer = combineReducers({
+  character: characterReducer,
+  user: userReducer,
+});
+
+// Define the root state type
+export type RootState = ReturnType<typeof rootReducer>;
+
+// Create and configure the Redux store
+export const store = configureStore({
+  reducer: rootReducer,
+  middleware: (getDefaultMiddleware) => 
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ['your/non-serializable/action'],
+        ignoredActionPaths: ['meta.arg', 'payload.timestamp'],
+        ignoredPaths: ['items.dates'],
+      },
+      thunk: {
+        extraArgument: { /* Your extra argument here */ },
+      },
+    }).concat(ruleEngine, logger as Middleware),
+  devTools: process.env.NODE_ENV !== 'production',
+  preloadedState: loadState(),
+});
+
+// Subscribe to store changes to save state
+store.subscribe(() => {
+  saveState(store.getState());
+});
+
+// Helper function to load state from localStorage
+function loadState(): Partial<RootState> | undefined {
+  try {
+    const serializedState = localStorage.getItem('reduxState');
+    if (serializedState === null) {
+      return undefined;
+    }
+    return JSON.parse(serializedState);
+  } catch (err) {
+    console.error('Failed to load state:', err);
+    return undefined;
+  }
+}
+
+// Helper function to save state to localStorage
+function saveState(state: RootState) {
+  try {
+    const serializedState = JSON.stringify(state);
+    localStorage.setItem('reduxState', serializedState);
+  } catch (err) {
+    console.error('Failed to save state:', err);
+  }
+}
+
+// Define types for dispatch and thunks
+export type AppDispatch = typeof store.dispatch;
+export type AppThunk<ReturnType = void> = ThunkAction<
+  ReturnType,
+  RootState,
+  unknown,
+  Action<string>
+>;
+
+// Export typed hooks
+import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
+export const useAppDispatch = () => useDispatch<AppDispatch>();
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
+
+// Smart logging function for debugging
+export function smartLog(message: string, data?: any) {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[${new Date().toISOString()}] ${message}`, data);
+  }
+}
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/lib/middlewares/middlewareFactory.ts ---
+import { Middleware, AnyAction } from 'redux';
+import { RootState } from '../store';
+
+export type GameMiddleware = Middleware<{}, RootState>;
+
+export function createMiddleware<A extends AnyAction = AnyAction>(
+  type: 'class' | 'race' | 'stats',
+  middlewareConfig: {
+    match: (action: unknown) => action is A;
+    apply: (state: RootState, action: A) => void;
+  }
+): GameMiddleware {
+  return (store) => (next) => (action: unknown) => {
+    const result = next(action);
+
+    if (middlewareConfig.match(action)) {
+      const state = store.getState();
+      middlewareConfig.apply(state, action);
+    }
+
+    return result;
+  };
+}
+
+export type ClassMiddleware = GameMiddleware;
+export type RaceMiddleware = GameMiddleware;
+export type StatsMiddleware = GameMiddleware;
+
+export function createTypedMiddleware<T extends AnyAction>(
+  type: 'class' | 'race' | 'stats',
+  match: (action: unknown) => action is T,
+  apply: (state: RootState, action: T) => void
+): GameMiddleware {
+  return createMiddleware(type, {
+    match,
+    apply,
+  });
+}
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/lib/middlewares/classMiddleware.ts ---
+import { AnyAction } from '@reduxjs/toolkit';
+import { createTypedMiddleware } from './middlewareFactory';
+import { updateCharacterInfo, addSkill } from '../characterSlice';
+import { RootState } from '../store';
+import { ClassSkills } from '../../types/game';
+
+const classSkills: ClassSkills = {
+  Fighter: ['Athletics', 'Intimidation', 'Survival'],
+  Wizard: ['Arcana', 'History', 'Investigation'],
+  Rogue: ['Acrobatics', 'Deception', 'Stealth'],
+  Cleric: ['Medicine', 'Insight', 'Religion'],
+};
+
+export const classMiddleware = createTypedMiddleware<ReturnType<typeof updateCharacterInfo>>(
+  'class',
+  (action): action is ReturnType<typeof updateCharacterInfo> => updateCharacterInfo.match(action),
+  (state: RootState, action: ReturnType<typeof updateCharacterInfo>) => {
+    if (action.payload.class && classSkills[action.payload.class]) {
+      const currentSkills = state.character.skills;
+      const newSkills = classSkills[action.payload.class].filter(
+        skill => !currentSkills.includes(skill)
+      );
+      
+      newSkills.forEach(skill => {
+        addSkill(skill);
+      });
+    }
+  }
+);
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/lib/middlewares/statsMiddleware.ts ---
+import { Middleware } from 'redux';
+import { RootState } from '../store';
+import { updateCharacterInfo, updateAttribute } from '../characterSlice';
+import { RaceModifiers, Attributes, CharacterState } from '../../types/game';
+
+const raceModifiers: RaceModifiers = {
+  Human: { strength: 1, dexterity: 1, constitution: 1, intelligence: 1, wisdom: 1, charisma: 1 },
+  Elf: { dexterity: 2, intelligence: 1 },
+  Dwarf: { constitution: 2, wisdom: 1 },
+  Halfling: { dexterity: 2, charisma: 1 },
+};
+
+export const statsMiddleware: Middleware<{}, RootState> = (store) => (next) => (action) => {
+  const result = next(action);
+
+  if (updateCharacterInfo.match(action) && action.payload.race) {
+    const state = store.getState().character;
+    const newRace = action.payload.race;
+    
+    if (raceModifiers[newRace]) {
+      const modifiers = raceModifiers[newRace];
+      Object.entries(modifiers).forEach(([attr, mod]) => {
+        const attribute = attr as keyof Attributes;
+        const currentValue = state.attributes[attribute];
+        if (typeof mod === 'number' && typeof currentValue === 'number') {
+          store.dispatch(updateAttribute({ attribute, value: currentValue + mod }));
+        }
+      });
+    }
+  }
+
+  return result;
+};
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/lib/middlewares/raceMiddleware.ts ---
+import { Middleware } from 'redux';
+import { RootState } from '../store';
+import { updateCharacterInfo, updateAttribute } from '../characterSlice';
+import { RaceModifiers, Attributes, CharacterState } from '../../types/game';
+
+const raceModifiers: RaceModifiers = {
+  Human: { strength: 1, dexterity: 1, constitution: 1, intelligence: 1, wisdom: 1, charisma: 1 },
+  Elf: { dexterity: 2, intelligence: 1 },
+  Dwarf: { constitution: 2, wisdom: 1 },
+  Halfling: { dexterity: 2, charisma: 1 },
+};
+
+export const raceMiddleware: Middleware<{}, RootState> = (store) => (next) => (action) => {
+  const result = next(action);
+
+  if (updateCharacterInfo.match(action) && action.payload.race) {
+    const state = store.getState().character;
+    const newRace = action.payload.race;
+    
+    if (raceModifiers[newRace]) {
+      const modifiers = raceModifiers[newRace];
+      Object.entries(modifiers).forEach(([attr, mod]) => {
+        const attribute = attr as keyof Attributes;
+        const currentValue = state.attributes[attribute];
+        if (typeof mod === 'number' && typeof currentValue === 'number') {
+          store.dispatch(updateAttribute({ attribute, value: currentValue + mod }));
+        }
+      });
+    }
+  }
+
+  return result;
+};
+
+--- /Users/davidraphael/Desktop/Manual Library/dnd-nextjs-game/src/pages/api/character/create.ts ---
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method === 'POST') {
+    // TODO: Implement character creation logic
+    res.status(200).json({ message: 'Character created successfully' });
+  } else {
+    res.setHeader('Allow', ['POST']);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
+  }
+}
+
+
