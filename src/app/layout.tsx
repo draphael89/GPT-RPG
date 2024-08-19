@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientProvider from '../components/ClientProvider';
-import { FirebaseProvider } from '../components/FirebaseProvider';
+import DynamicFirebaseProvider from '../components/DynamicFirebaseProvider';
 import { ChakraProvider } from '@chakra-ui/react';
 import { metadata } from './metadata';
 
@@ -18,13 +18,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <FirebaseProvider>
+        <DynamicFirebaseProvider>
           <ClientProvider>
             <ChakraProvider>
               {children}
             </ChakraProvider>
           </ClientProvider>
-        </FirebaseProvider>
+        </DynamicFirebaseProvider>
       </body>
     </html>
   );

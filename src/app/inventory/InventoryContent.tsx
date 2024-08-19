@@ -21,14 +21,14 @@ const InventoryItemComponent: React.FC<InventoryItem> = ({ name, quantity }) => 
 const InventoryContent: React.FC = () => {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const firebase = useFirebase();
+  const { services, error } = useFirebase();
 
   useEffect(() => {
     const fetchInventory = async () => {
-      if (firebase?.firestore && firebase?.auth.currentUser) {
+      if (services?.firestore && services?.auth.currentUser) {
         try {
-          const userId = firebase.auth.currentUser.uid;
-          const inventoryRef = collection(firebase.firestore, `users/${userId}/inventory`);
+          const userId = services.auth.currentUser.uid;
+          const inventoryRef = collection(services.firestore, `users/${userId}/inventory`);
           const inventorySnapshot = await getDocs(inventoryRef);
 
           const items = inventorySnapshot.docs.map((doc: DocumentData) => ({
@@ -45,11 +45,23 @@ const InventoryContent: React.FC = () => {
       }
     };
 
-    fetchInventory();
-  }, [firebase]);
+    if (services) {
+      fetchInventory();
+    } else {
+      setLoading(false);
+    }
+  }, [services]);
 
   if (loading) {
     return <Spinner size="xl" />;
+  }
+
+  if (error) {
+    return <Text color="red.500">Error: {error.message}</Text>;
+  }
+
+  if (!services) {
+    return <Text>Firebase services are not available.</Text>;
   }
 
   return (

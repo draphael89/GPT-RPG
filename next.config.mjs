@@ -29,8 +29,14 @@ const nextConfig = {
         tls: false,
       };
     }
-    // Add this line to handle potential circular dependencies
+    // Handle potential circular dependencies
     config.resolve.alias['@'] = path.resolve(__dirname, 'src');
+    
+    // Exclude Firebase from server-side bundling
+    if (isServer) {
+      config.externals.push('firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/analytics');
+    }
+    
     return config;
   },
   images: {
@@ -60,6 +66,16 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  // Ensure Firebase is only loaded on the client side
+  experimental: {
+    esmExternals: 'loose',
+  },
+  // Optimize for production builds
+  productionBrowserSourceMaps: true,
+  // Enable SWC minification for improved performance
+  swcMinify: true,
+  // Configure Vercel output
+  output: 'standalone',
 };
 
 export default nextConfig;

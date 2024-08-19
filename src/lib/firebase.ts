@@ -29,26 +29,27 @@ const firebaseConfig = {
 console.log('Firebase config:', JSON.stringify(firebaseConfig, null, 2));
 
 // Initialize Firebase
-let app: FirebaseApp;
-let db: Firestore;
-let auth: Auth;
+let app: FirebaseApp | undefined;
+let db: Firestore | undefined;
+let auth: Auth | undefined;
 let analytics: Analytics | undefined;
 
-try {
-  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-  db = getFirestore(app);
-  auth = getAuth(app);
-  
-  // Initialize Analytics only on the client side
-  if (typeof window !== 'undefined') {
-    analytics = getAnalytics(app);
-    console.log('Firebase Analytics initialized');
+if (typeof window !== 'undefined' && !getApps().length) {
+  try {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+    
+    if (process.env.NODE_ENV === 'production') {
+      analytics = getAnalytics(app);
+      console.log('Firebase Analytics initialized');
+    }
+    
+    console.log('Firebase initialized successfully');
+  } catch (error) {
+    console.error('Error initializing Firebase:', error);
+    throw error;
   }
-  
-  console.log('Firebase initialized successfully');
-} catch (error) {
-  console.error('Error initializing Firebase:', error);
-  throw error;
 }
 
 // Export initialized Firebase instances
@@ -60,7 +61,7 @@ export const getApp = (): Promise<FirebaseApp> => {
     if (app) {
       resolve(app);
     } else {
-      const unsubscribe = onAuthStateChanged(auth, () => {
+      const unsubscribe = onAuthStateChanged(auth!, () => {
         unsubscribe();
         if (app) {
           resolve(app);
@@ -79,6 +80,7 @@ export const getApp = (): Promise<FirebaseApp> => {
  * @returns Promise resolving to the created User object
  */
 export const signUp = async (email: string, password: string): Promise<User> => {
+  if (!auth) throw new Error('Firebase Auth is not initialized');
   console.log(`Attempting to sign up user with email: ${email}`);
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -97,6 +99,7 @@ export const signUp = async (email: string, password: string): Promise<User> => 
  * @returns Promise resolving to the signed-in User object
  */
 export const signIn = async (email: string, password: string): Promise<User> => {
+  if (!auth) throw new Error('Firebase Auth is not initialized');
   console.log(`Attempting to sign in user with email: ${email}`);
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -113,6 +116,7 @@ export const signIn = async (email: string, password: string): Promise<User> => 
  * @returns Promise that resolves when sign out is complete
  */
 export const signOutUser = async (): Promise<void> => {
+  if (!auth) throw new Error('Firebase Auth is not initialized');
   console.log('Attempting to sign out user');
   try {
     await signOut(auth);
@@ -129,6 +133,7 @@ export const signOutUser = async (): Promise<void> => {
  * @returns Promise that resolves to the ID of the saved document
  */
 export const saveCharacter = async (character: CharacterState): Promise<string> => {
+  if (!db) throw new Error('Firestore is not initialized');
   console.log('Attempting to save character:', character);
   try {
     const docRef = await addDoc(collection(db, 'characters'), character);
@@ -145,6 +150,7 @@ export const saveCharacter = async (character: CharacterState): Promise<string> 
  * @returns Promise resolving to an array of character documents
  */
 export const getCharacters = async (): Promise<DocumentData[]> => {
+  if (!db || !auth) throw new Error('Firebase is not fully initialized');
   console.log('Fetching characters for current user');
   try {
     const user = auth.currentUser;
@@ -173,6 +179,7 @@ export const getCharacters = async (): Promise<DocumentData[]> => {
  * @returns Promise that resolves when the update is complete
  */
 export const updateCharacter = async (characterId: string, updates: Partial<CharacterState>): Promise<void> => {
+  if (!db) throw new Error('Firestore is not initialized');
   console.log(`Attempting to update character with ID: ${characterId}`);
   try {
     const characterRef = doc(db, 'characters', characterId);
@@ -190,6 +197,7 @@ export const updateCharacter = async (characterId: string, updates: Partial<Char
  * @returns Promise that resolves when the deletion is complete
  */
 export const deleteCharacter = async (characterId: string): Promise<void> => {
+  if (!db) throw new Error('Firestore is not initialized');
   console.log(`Attempting to delete character with ID: ${characterId}`);
   try {
     await deleteDoc(doc(db, 'characters', characterId));
@@ -206,6 +214,7 @@ export const deleteCharacter = async (characterId: string): Promise<void> => {
  * @returns Unsubscribe function
  */
 export const onAuthStateChange = (callback: (user: User | null) => void) => {
+  if (!auth) throw new Error('Firebase Auth is not initialized');
   return onAuthStateChanged(auth, callback);
 };
 

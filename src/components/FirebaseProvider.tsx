@@ -16,6 +16,8 @@ export function useFirebase() {
 
 export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   const [app, setApp] = useState<FirebaseApp | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const initializeFirebase = async () => {
@@ -24,15 +26,21 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         setApp(firebaseApp);
       } catch (error) {
         console.error('Failed to initialize Firebase:', error);
+        setError(error instanceof Error ? error : new Error('Unknown error'));
+      } finally {
+        setLoading(false);
       }
     };
 
     initializeFirebase();
   }, []);
 
+  if (loading) return <div>Loading Firebase...</div>;
+  if (error) return <div>Error initializing Firebase: {error.message}</div>;
+
   return (
     <FirebaseContext.Provider value={{ app }}>
-      {app ? children : <div>Loading...</div>}
+      {children}
     </FirebaseContext.Provider>
   );
 }

@@ -16,36 +16,48 @@ interface FirebaseServices {
   analytics: Analytics | null;
 }
 
-const useFirebase = (): FirebaseServices | null => {
+const useFirebase = (): { services: FirebaseServices | null; error: Error | null } => {
   const [services, setServices] = useState<FirebaseServices | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !getApps().length) {
-      const firebaseConfig = getFirebaseConfig();
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const firestore = getFirestore(app);
-      const storage = getStorage(app);
-      const functions = getFunctions(app);
-      let analytics: Analytics | null = null;
-
-      // Only initialize analytics on the client-side
-      if (process.env.NODE_ENV !== 'development') {
-        analytics = getAnalytics(app);
+    const initializeFirebase = async () => {
+      if (typeof window === 'undefined' || getApps().length > 0) {
+        return;
       }
 
-      setServices({
-        app,
-        auth,
-        firestore,
-        storage,
-        functions,
-        analytics,
-      });
-    }
+      try {
+        const firebaseConfig = getFirebaseConfig();
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const firestore = getFirestore(app);
+        const storage = getStorage(app);
+        const functions = getFunctions(app);
+        let analytics: Analytics | null = null;
+
+        // Only initialize analytics on the client-side and in production
+        if (process.env.NODE_ENV === 'production') {
+          analytics = getAnalytics(app);
+        }
+
+        setServices({
+          app,
+          auth,
+          firestore,
+          storage,
+          functions,
+          analytics,
+        });
+      } catch (err) {
+        console.error('Failed to initialize Firebase:', err);
+        setError(err instanceof Error ? err : new Error('Unknown error initializing Firebase'));
+      }
+    };
+
+    initializeFirebase();
   }, []);
 
-  return services;
+  return { services, error };
 };
 
 export default useFirebase;
